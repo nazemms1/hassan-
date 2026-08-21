@@ -1,0 +1,264 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Slate ground, one accent for the whole site: a light, professional blue.
+   Dark only, by design — there is no light theme to keep in step.
+
+   Surfaces are glass: translucent panes lit from the top edge, floating over
+   blurred colour orbs. That means panel colours come from white at low alpha
+   rather than from a solid --surface token, so the ambient colour behind can
+   actually show through.
+   ───────────────────────────────────────────────────────────────────────── */
+
+@layer base {
+  :root {
+    --ground: 18 20 28;
+    --band: 22 25 34;
+    --ink: 238 240 246;
+    --muted: 154 163 184;
+    --faint: 107 116 136;
+    --rule: 42 47 61;
+    --accent: 88 166 255;
+
+    color-scheme: dark;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    background-color: rgb(var(--ground));
+  }
+
+  body {
+    @apply bg-ground font-body text-ink antialiased;
+  }
+
+  ::selection {
+    background: rgb(var(--accent) / 0.3);
+    color: rgb(var(--ink));
+  }
+
+  :focus-visible {
+    outline: 2px solid rgb(var(--accent));
+    outline-offset: 3px;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: rgb(var(--ground));
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgb(var(--rule));
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgb(var(--faint));
+  }
+}
+
+@layer components {
+  /* The mono voice: dates, categories, and other marginalia. */
+  .label {
+    @apply font-mono text-label uppercase text-faint;
+  }
+
+  /* A chip carrying the accent — categories, status, availability. */
+  .chip {
+    @apply inline-flex items-center rounded-full border font-mono text-label uppercase;
+    color: rgb(var(--accent));
+    background: rgb(var(--accent) / 0.12);
+    border-color: rgb(var(--accent) / 0.28);
+    padding: 0.4rem 0.7rem;
+  }
+
+  /* Glass: a translucent pane over the ambient colour behind it, with a lit
+     top edge so it reads as a physical sheet rather than a flat card. */
+  .panel {
+    position: relative;
+    border-radius: theme('borderRadius.panel');
+    background: linear-gradient(
+      160deg,
+      rgb(255 255 255 / 0.075),
+      rgb(255 255 255 / 0.02) 55%,
+      rgb(255 255 255 / 0.035)
+    );
+    border: 1px solid rgb(255 255 255 / 0.09);
+    backdrop-filter: blur(22px) saturate(150%);
+    -webkit-backdrop-filter: blur(22px) saturate(150%);
+    box-shadow:
+      inset 0 1px 0 0 rgb(255 255 255 / 0.11),
+      0 24px 60px -34px rgb(0 0 0 / 0.95);
+  }
+
+  /* Lifts toward the reader, and a light sweeps across the glass as it does. */
+  .panel-hover {
+    overflow: hidden;
+    transition:
+      transform 500ms theme('transitionTimingFunction.seam'),
+      border-color 500ms theme('transitionTimingFunction.seam'),
+      box-shadow 500ms theme('transitionTimingFunction.seam');
+  }
+  .panel-hover::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    background: linear-gradient(
+      110deg,
+      transparent 35%,
+      rgb(255 255 255 / 0.07) 50%,
+      transparent 65%
+    );
+    background-size: 250% 100%;
+    background-position: 120% 0;
+    transition:
+      opacity 400ms ease,
+      background-position 900ms theme('transitionTimingFunction.seam');
+  }
+  .panel-hover:hover {
+    transform: translateY(-3px);
+    border-color: rgb(var(--accent) / 0.4);
+    box-shadow:
+      inset 0 1px 0 0 rgb(255 255 255 / 0.14),
+      0 0 0 1px rgb(var(--accent) / 0.12),
+      0 30px 70px -34px rgb(0 0 0 / 0.95);
+  }
+  .panel-hover:hover::after {
+    opacity: 1;
+    background-position: -20% 0;
+  }
+
+  /* Ambient colour for the glass to pick up. Sits behind, never interactive. */
+  .orb {
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(90px);
+    pointer-events: none;
+    animation: drift 22s ease-in-out infinite alternate;
+  }
+
+  .prose-measure {
+    @apply max-w-measure text-[0.9375rem] leading-[1.75] text-muted;
+  }
+
+  .btn {
+    @apply inline-flex items-center gap-2.5 rounded-full px-5 py-3 font-mono text-label uppercase;
+    transition:
+      transform 500ms theme('transitionTimingFunction.seam'),
+      background-color 500ms theme('transitionTimingFunction.seam'),
+      border-color 500ms theme('transitionTimingFunction.seam'),
+      color 500ms theme('transitionTimingFunction.seam');
+  }
+  .btn-primary {
+    background: rgb(var(--accent));
+    color: rgb(var(--ground));
+  }
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    background: rgb(var(--accent) / 0.88);
+  }
+  .btn-ghost {
+    @apply border border-rule text-muted;
+  }
+  .btn-ghost:hover {
+    transform: translateY(-2px);
+    border-color: rgb(var(--accent) / 0.5);
+    color: rgb(var(--ink));
+  }
+
+  /* Nav link: the underline grows from the left on hover and stays for the
+     section you are actually in. */
+  .nav-link {
+    @apply relative rounded-full px-3.5 py-2;
+    transition: color 400ms ease;
+  }
+  .nav-link::after {
+    content: '';
+    position: absolute;
+    left: 0.875rem;
+    right: 0.875rem;
+    bottom: 0.25rem;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 400ms theme('transitionTimingFunction.seam');
+  }
+  .nav-link:hover::after,
+  .nav-link[aria-current='true']::after {
+    transform: scaleX(1);
+  }
+}
+
+/* ── Motion ──────────────────────────────────────────────────────────────
+   Every animation here is suppressed wholesale by the reduced-motion block
+   at the end of this file. Nothing below is load-bearing for legibility.
+   ──────────────────────────────────────────────────────────────────────── */
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Ambient orbs breathe, slowly and out of sync with each other. */
+@keyframes drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(4%, -6%, 0) scale(1.12);
+  }
+}
+
+/* The availability dot, so "available for work" reads as live. */
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgb(var(--accent) / 0.5);
+  }
+  50% {
+    opacity: 0.75;
+    box-shadow: 0 0 0 5px rgb(var(--accent) / 0);
+  }
+}
+
+.enter {
+  animation: rise 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.pulse-dot {
+  animation: pulse-dot 2.4s ease-in-out infinite;
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
