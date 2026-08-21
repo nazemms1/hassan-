@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { prefersReducedMotion, useInView } from '../lib/motion'
 
 type Props = {
@@ -21,9 +21,13 @@ const DURATION = 1100
  * has asked for reduced motion.
  */
 export default function CountUp({ value, className = '' }: Props) {
-  const parsed = parse(value)
+  // Memoised: the effect below depends on it, and a fresh object every render
+  // would restart the animation on every frame it schedules.
+  const parsed = useMemo(() => parse(value), [value])
   const [ref, inView] = useInView<HTMLSpanElement>({ threshold: 0.4 })
   const [current, setCurrent] = useState(0)
+
+  const target = parsed?.target ?? 0
 
   useEffect(() => {
     if (!parsed || !inView || prefersReducedMotion()) return
@@ -35,13 +39,13 @@ export default function CountUp({ value, className = '' }: Props) {
       const progress = Math.min((now - start) / DURATION, 1)
       // Ease-out, so it decelerates into the final number.
       const eased = 1 - Math.pow(1 - progress, 3)
-      setCurrent(Math.round(parsed.target * eased))
+      setCurrent(Math.round(target * eased))
       if (progress < 1) frame = requestAnimationFrame(step)
     }
 
     frame = requestAnimationFrame(step)
     return () => cancelAnimationFrame(frame)
-  }, [inView, parsed])
+  }, [inView, parsed, target])
 
   if (!parsed) {
     return <span className={className}>{value}</span>
