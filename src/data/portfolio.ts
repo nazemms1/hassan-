@@ -48,13 +48,13 @@ export type Project = {
   discipline: string
   description: string
   contribution: string[]
-  image?: string
+  images?: string[]
   url?: string
   placeholder?: boolean
 }
 
 // PLACEHOLDER: no case studies were supplied. These four slots carry the right
-// shape and disciplines — replace title / client / description / image with real
+// shape and disciplines — replace title / client / description / images with real
 // work and remove `placeholder: true` to drop the "slot open" marker.
 export const projects: Project[] = [
   {
@@ -62,7 +62,12 @@ export const projects: Project[] = [
     client: 'Digidia',
     year: '2025',
     discipline: 'Digital product',
-    image: '/hassan-/images/Pulsey.webp',
+    images: [
+      '/hassan-/images/Pulsey.webp',
+      '/hassan-/images/Thumbnails%20(1).webp',
+      '/hassan-/images/Thumbnails-1%20(1).webp',
+      '/hassan-/images/Thumbnails-2%20(1).webp',
+    ],
     description:
       'A product design engagement led end to end — research, flows, high-fidelity interface, and the design system behind it.',
     contribution: ['User research', 'Wireframes', 'UI design', 'Design system'],
