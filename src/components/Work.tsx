@@ -11,7 +11,7 @@ function Frame({ image, title }: { image?: string; title: string }) {
         src={image}
         alt={title}
         loading="lazy"
-        className="h-full w-full object-cover transition-transform duration-[1200ms] ease-seam group-hover:scale-[1.05]"
+        className="h-full w-full bg-white object-contain transition-transform duration-[1200ms] ease-seam group-hover:scale-[1.05]"
       />
     )
   }

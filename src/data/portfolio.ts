@@ -62,6 +62,7 @@ export const projects: Project[] = [
     client: 'Digidia',
     year: '2025',
     discipline: 'Digital product',
+    image: '/hassan-/images/Pulsey.webp',
     description:
       'A product design engagement led end to end — research, flows, high-fidelity interface, and the design system behind it.',
     contribution: ['User research', 'Wireframes', 'UI design', 'Design system'],
