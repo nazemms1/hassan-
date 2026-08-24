@@ -289,6 +289,36 @@
     text-transform: uppercase;
   }
 
+  .credential-card {
+    min-height: 21rem;
+  }
+
+  .credential-card-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .credential-index {
+    padding-top: 0.45rem;
+    color: rgb(var(--accent));
+    white-space: nowrap;
+  }
+
+  .credential-date {
+    border-top: 1px solid rgb(var(--rule));
+  }
+
+  .credential-preview {
+    opacity: 0.88;
+    transition: opacity 500ms theme('transitionTimingFunction.seam');
+  }
+
+  .credential-card:hover .credential-preview {
+    opacity: 1;
+  }
+
   .design-toolbar,
   .design-statusbar {
     display: flex;

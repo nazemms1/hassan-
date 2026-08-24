@@ -8,32 +8,35 @@ export default function Credentials() {
     <Band
       id="credentials"
       label="Credentials"
-      title="Education & training"
-      intro="A software engineering degree, plus formal UX training from DTC and Google."
+      title="Education, Certifications & Recognition"
+      intro="A software engineering degree, professional UX certifications, and recognition for creative contribution."
     >
-      <div className="grid gap-6 lg:grid-cols-[1fr_1.4fr]">
-        <Reveal className="panel panel-hover flex flex-col gap-4 p-6 sm:p-8">
-          <span className="chip w-fit">Degree</span>
+      <div className="credentials-grid grid gap-5 md:grid-cols-2">
+        <Reveal className="credential-card panel panel-hover flex flex-col gap-4 p-6 sm:p-8">
+          <div className="credential-card-heading">
+            <span className="chip w-fit">Degree</span>
+            <span className="credential-index label">01 / 04</span>
+          </div>
           <h3 className="font-display text-[1.125rem] font-semibold leading-snug text-ink">
             {education.degree}
           </h3>
           <p className="text-[0.9375rem] text-muted">{education.school}</p>
-          <p className="label mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-4">
+          <p className="credential-date label mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-4">
             <span>{education.period}</span>
             <span aria-hidden="true" className="h-px w-5 bg-rule" />
             <span>{education.detail}</span>
           </p>
         </Reveal>
 
-        <div className="flex flex-col gap-6">
-          {certifications.map((certification, i) => (
-            <Reveal
-              key={certification.title}
-              delay={(i + 1) * 90}
-              className="panel panel-hover flex flex-col gap-4 p-6 sm:p-8"
-            >
-              <div className="flex flex-wrap items-center justify-between gap-3">
+        {certifications.map((certification, i) => (
+          <Reveal
+            key={certification.title}
+            delay={(i + 1) * 90}
+            className="credential-card panel panel-hover flex flex-col gap-4 p-6 sm:p-8"
+          >
+              <div className="credential-card-heading">
                 <span className="chip">{certification.issuer}</span>
+                <span className="credential-index label">0{i + 2} / 04</span>
               </div>
 
               <h3 className="font-display text-[1.125rem] font-semibold leading-snug text-ink">
@@ -41,6 +44,11 @@ export default function Credentials() {
               </h3>
               <p className="text-[0.9375rem] leading-[1.75] text-muted">
                 {certification.description}
+              </p>
+
+              <p className="credential-date label mt-auto flex items-center gap-3 pt-2">
+                <span className="h-px w-5 bg-rule" aria-hidden="true" />
+                <span>{certification.date}</span>
               </p>
 
               {certification.image ? (
@@ -52,7 +60,7 @@ export default function Credentials() {
                 >
                   <img
                     alt={certification.imageAlt ?? certification.title}
-                    className="block aspect-[1280/904] w-full object-cover transition duration-700 ease-out group-hover:scale-[1.025]"
+                    className="credential-preview block aspect-[16/7] w-full object-cover transition duration-700 ease-out group-hover:scale-[1.025]"
                     loading="lazy"
                     src={certification.image}
                   />
@@ -63,23 +71,8 @@ export default function Credentials() {
                 </a>
               ) : null}
 
-              {certification.modules ? (
-                <ul className="grid gap-2.5 border-t border-rule pt-5 sm:grid-cols-2">
-                  {certification.modules.map((module) => (
-                    <li key={module} className="flex gap-2.5">
-                      <span
-                        aria-hidden="true"
-                        className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full"
-                        style={{ background: 'rgb(var(--accent) / 0.7)' }}
-                      />
-                      <span className="text-micro text-muted">{module}</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-            </Reveal>
-          ))}
-        </div>
+          </Reveal>
+        ))}
       </div>
     </Band>
   )

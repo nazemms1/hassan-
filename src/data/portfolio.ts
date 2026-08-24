@@ -58,20 +58,27 @@ export type Project = {
 // work and remove `placeholder: true` to drop the "slot open" marker.
 export const projects: Project[] = [
   {
-    title: 'Case study one',
-    client: 'Digidia',
+    title: 'Pulsey',
+    client: 'Yslootahetech',
     year: '2025',
-    discipline: 'Digital product',
+    discipline: 'Mobile health app',
     images: [
-      '/hassan-/images/Pulsey.webp',
-      '/hassan-/images/Thumbnails%20(1).webp',
-      '/hassan-/images/Thumbnails-1%20(1).webp',
-      '/hassan-/images/Thumbnails-2%20(1).webp',
+      '/hassan-/images/project-1/Pulsey.webp',
+      '/hassan-/images/project-1/Thumbnails.webp',
+      '/hassan-/images/project-1/Thumbnails-1.webp',
+      '/hassan-/images/project-1/Thumbnails-2.webp',
+      '/hassan-/images/project-1/Thumbnails-3.webp',
+      '/hassan-/images/project-1/Thumbnails-4.webp',
     ],
     description:
-      'A product design engagement led end to end — research, flows, high-fidelity interface, and the design system behind it.',
-    contribution: ['User research', 'Wireframes', 'UI design', 'Design system'],
-    placeholder: true,
+      'Pulsey is a mobile health monitoring app designed to make personal health tracking simple and intuitive. The experience covers heart rate, blood pressure, blood sugar, weight, and BMI monitoring. I designed clear user flows for measurements, health records, statistics, and historical data. Interactive charts and visual indicators help users understand their health data at a glance. The app also includes an AI Doctor experience for accessible health-related consultations. The design focuses on simplicity, consistency, usability, and clear health data visualization.',
+    contribution: [
+      'User flows',
+      'Health records',
+      'Data visualization',
+      'Interactive charts',
+      'AI Doctor experience',
+    ],
   },
   {
     title: 'Case study two',
@@ -219,6 +226,7 @@ export type Certification = {
   title: string
   issuer: string
   description: string
+  date: string
   modules?: string[]
   image?: string
   imageAlt?: string
@@ -227,16 +235,20 @@ export type Certification = {
 export const certifications: Certification[] = [
   {
     title: 'UI/UX Design Training',
-    issuer: 'DTC (UNRWA)',
+    issuer: 'DTC — UI/UX TRAINING',
     description:
       '100 hours of hands-on training focused on designing intuitive user interfaces and delivering high-quality user experiences, applying creativity and innovation to practical design challenges.',
+    date: 'December 2023',
+    image: '/hassan-/images/DCT.webp',
+    imageAlt: 'UI/UX Design Training certificate from DTC (UNRWA)',
   },
   {
     title: 'Google UX Design Professional Certificate',
-    issuer: 'Coursera — Google',
+    issuer: 'GOOGLE — PROFESSIONAL CERTIFICATE',
     description:
       'Comprehensive training in user research, wireframing, prototyping, usability testing, interaction design, and high-fidelity interface design in Figma.',
-    image: '/hassan-/cert.jpg',
+    date: 'February 2024',
+    image: '/hassan-/images/Google.webp',
     imageAlt: 'Google UX Design Professional Certificate issued to Mohamad Hassan Aljeshi',
     modules: [
       'Foundations of User Experience (UX) Design',
@@ -247,6 +259,15 @@ export const certifications: Certification[] = [
       'Build Dynamic User Interfaces (UI) for Websites',
       'Design a User Experience for Social Good & Prepare for Jobs',
     ],
+  },
+  {
+    title: 'Certificate of Appreciation',
+    issuer: 'LOOTAH TECH — RECOGNITION',
+    description:
+      'Recognized for dedication, valuable contributions, and consistent commitment to the timely and successful completion of assigned tasks.',
+    date: 'July 2025',
+    image: '/hassan-/images/new.webp',
+    imageAlt: 'Certificate of Appreciation from Ys Lootah Tech',
   },
 ]
 

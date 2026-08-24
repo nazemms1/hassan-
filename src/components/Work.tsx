@@ -325,7 +325,7 @@ export default function Work() {
                     </p>
                   </div>
 
-                  <p className="text-[0.9375rem] leading-[1.7] text-muted">
+                  <p className="line-clamp-3 text-[0.9375rem] leading-[1.7] text-muted">
                     {project.description}
                   </p>
 

@@ -16,6 +16,20 @@ npm install
 npm run dev
 ```
 
+## GoatCounter Analytics
+
+1. Create a GoatCounter site for `https://nazemms1.github.io/hassan-/`.
+2. Create a local `.env.local` file with:
+
+```env
+VITE_GOATCOUNTER_ENDPOINT=https://yourcode.goatcounter.com/count
+```
+
+3. Build and deploy the site with `npm run deploy`.
+
+The analytics script is loaded only when this variable exists. GoatCounter's
+dashboard is available at `https://yourcode.goatcounter.com`.
+
 | Script              | What it does                                    |
 | ------------------- | ----------------------------------------------- |
 | `npm run dev`       | Dev server on <http://localhost:5175>           |

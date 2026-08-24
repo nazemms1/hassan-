@@ -51,10 +51,7 @@ export default function Hero() {
 
         <div className="enter hero-visual [animation-delay:180ms]">
           <div className="hero-portrait-stage">
-            <span className="hero-ring hero-ring-one" aria-hidden="true" />
-            <span className="hero-ring hero-ring-two" aria-hidden="true" />
-            <span className="hero-ring hero-ring-three" aria-hidden="true" />
-            <div className="hero-portrait" aria-label="Portrait of Hassan">
+              <div className="hero-portrait" aria-label="Portrait of Hassan">
               <img src="/hassan-/Photo.png" alt="Portrait of Hassan" />
             </div>
           </div>
