@@ -65,90 +65,12 @@ export default function Hero() {
           </ul>
         </div>
 
-        <div
-          aria-label="A preview of a design workspace"
-          className="enter design-workspace panel [animation-delay:180ms]"
-        >
-          <div className="design-toolbar">
-            <div className="flex items-center gap-2.5">
-              <span className="design-window-dots" aria-hidden="true"><i /><i /><i /></span>
-              <span className="design-mark">M</span>
-              <span className="design-file">Untitled / Portfolio</span>
-            </div>
-            <div className="design-toolbar-actions" aria-hidden="true">
-              <span className="design-tool design-tool-active">▣</span>
-              <span className="design-tool">⌁</span>
-              <span className="design-tool">▱</span>
-              <span className="design-zoom">100% <b>⌄</b></span>
-              <span className="design-tool">⊞</span>
-              <span className="design-avatar">MH</span>
-            </div>
+        <div className="enter hero-visual [animation-delay:180ms]">
+          <div className="hero-portrait" aria-label="Portrait of Hassan">
+            <img src="/hassan-/Photo.png" alt="Portrait of Hassan" />
+            <span className="hero-portrait-label">Creative director / 2025</span>
           </div>
 
-          <div className="design-body">
-            <aside className="design-sidebar" aria-label="Layers">
-              <span className="design-sidebar-title">Layers</span>
-              <span className="design-layer design-layer-active"><b>◇</b> Portfolio</span>
-              <span className="design-layer"><b>▱</b> Header</span>
-              <span className="design-layer"><b>▱</b> Selected work</span>
-              <span className="design-layer"><b>▱</b> Contact</span>
-            </aside>
-
-            <div className="design-canvas">
-              <span className="design-stage-label">Frame / Desktop — 1440 × 900</span>
-              <div className="design-artboard">
-                <div className="design-artboard-top">
-                  <span className="design-kicker">CASE STUDY / 01</span>
-                  <span className="design-menu" aria-hidden="true">↗</span>
-                </div>
-                <div className="design-artboard-content">
-                  <span className="design-accent-line" aria-hidden="true" />
-                  <span className="design-small-type">PRODUCT DESIGN / MOBILE</span>
-                  <strong>Pulsey<span className="design-period">.</span></strong>
-                  <span className="design-artboard-note">Turning health data<br />into meaningful insights.</span>
-                  <div className="design-project-image-wrap">
-                    <img
-                      src="/hassan-/images/Pulsey.webp"
-                      alt="Pulsey health tracking product interface"
-                      className="design-project-image"
-                    />
-                    <span className="design-selection-tag">Image / 01</span>
-                    <i className="design-handle design-handle-tl" />
-                    <i className="design-handle design-handle-tr" />
-                    <i className="design-handle design-handle-bl" />
-                    <i className="design-handle design-handle-br" />
-                  </div>
-                  <div className="design-project-meta">
-                    <span>UI / UX</span>
-                    <span>2025</span>
-                  </div>
-                </div>
-                <div className="design-artboard-footer">
-                  <span>MH / CREATIVE DIRECTION</span>
-                  <span>01—04</span>
-                </div>
-              </div>
-            </div>
-
-            <aside className="design-properties" aria-label="Design properties">
-              <span className="design-sidebar-title">Design</span>
-              <div className="design-properties-tabs"><b>Design</b><span>Prototype</span></div>
-              <span className="design-property-label">Frame</span>
-              <div className="design-input-row"><span>W</span><b>420</b><span>H</span><b>560</b></div>
-              <div className="design-input-row"><span>X</span><b>510</b><span>Y</span><b>168</b></div>
-              <span className="design-property-label">Fill</span>
-              <div className="design-fill-row"><span className="design-swatch" /> <b>#12141C</b></div>
-              <span className="design-property-label">Corner radius</span>
-              <div className="design-radius-row"><b>12</b><span>px</span></div>
-              <span className="design-property-label">Type</span>
-              <div className="design-type-row"><b>Sora</b><span>Semibold</span></div>
-            </aside>
-          </div>
-
-          <div className="design-statusbar">
-            <span><i /> All changes saved</span>
-            <span>Prototype ready <b>↗</b></span>
-          </div>
         </div>
       </div>
 
