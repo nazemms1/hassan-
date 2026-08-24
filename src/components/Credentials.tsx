@@ -43,6 +43,26 @@ export default function Credentials() {
                 {certification.description}
               </p>
 
+              {certification.image ? (
+                <a
+                  className="group relative block overflow-hidden rounded-panel border border-white/10 bg-black/20 focus-visible:outline-offset-4"
+                  href={certification.image}
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  <img
+                    alt={certification.imageAlt ?? certification.title}
+                    className="block aspect-[1280/904] w-full object-cover transition duration-700 ease-out group-hover:scale-[1.025]"
+                    loading="lazy"
+                    src={certification.image}
+                  />
+                  <span className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-black/75 via-black/30 to-transparent px-4 pb-3 pt-10 font-mono text-[0.625rem] uppercase tracking-[0.08em] text-white/90">
+                    <span>View certificate</span>
+                    <span aria-hidden="true" className="text-base leading-none">↗</span>
+                  </span>
+                </a>
+              ) : null}
+
               {certification.modules ? (
                 <ul className="grid gap-2.5 border-t border-rule pt-5 sm:grid-cols-2">
                   {certification.modules.map((module) => (

@@ -204,6 +204,7 @@ export default function Work() {
   const dragStartScrollLeft = useRef(0)
   const isDragging = useRef(false)
   const didDrag = useRef(false)
+  const suppressNextClick = useRef(false)
   const [selectedProject, setSelectedProject] = useState<(typeof projects)[number] | null>(null)
 
   const nudge = (direction: 1 | -1) => {
@@ -223,6 +224,7 @@ export default function Work() {
     dragStartScrollLeft.current = track.scrollLeft
     isDragging.current = true
     didDrag.current = false
+    suppressNextClick.current = false
   }
 
   const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
@@ -231,13 +233,15 @@ export default function Work() {
     const track = trackRef.current
     if (!track) return
     const distance = event.clientX - dragStartX.current
-    if (Math.abs(distance) > 4) didDrag.current = true
+    if (Math.abs(distance) > 8) didDrag.current = true
     if (didDrag.current) track.scrollLeft = dragStartScrollLeft.current - distance
   }
 
   const stopDragging = () => {
     if (!isDragging.current) return
+    suppressNextClick.current = didDrag.current
     isDragging.current = false
+    didDrag.current = false
   }
 
   return (
@@ -279,11 +283,11 @@ export default function Work() {
             onPointerMove={handlePointerMove}
             onPointerUp={stopDragging}
             onPointerCancel={stopDragging}
-            onClick={(event) => {
-              if (didDrag.current) {
+            onClickCapture={(event) => {
+              if (suppressNextClick.current) {
                 event.preventDefault()
                 event.stopPropagation()
-                didDrag.current = false
+                suppressNextClick.current = false
               }
             }}
             className={`no-scrollbar -mx-6 flex snap-x snap-mandatory gap-6 overflow-x-auto px-6 pb-2 touch-pan-x sm:-mx-10 sm:px-10 ${isDragging.current ? 'cursor-grabbing' : 'cursor-grab'}`}
@@ -336,11 +340,6 @@ export default function Work() {
                     ))}
                   </ul>
 
-                  {project.placeholder ? (
-                    <p className="label border-t border-dashed border-rule pt-4">
-                      Placeholder — real case study to be added
-                    </p>
-                  ) : null}
                 </div>
               </article>
             ))}

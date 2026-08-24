@@ -220,6 +220,8 @@ export type Certification = {
   issuer: string
   description: string
   modules?: string[]
+  image?: string
+  imageAlt?: string
 }
 
 export const certifications: Certification[] = [
@@ -234,6 +236,8 @@ export const certifications: Certification[] = [
     issuer: 'Coursera — Google',
     description:
       'Comprehensive training in user research, wireframing, prototyping, usability testing, interaction design, and high-fidelity interface design in Figma.',
+    image: '/hassan-/cert.jpg',
+    imageAlt: 'Google UX Design Professional Certificate issued to Mohamad Hassan Aljeshi',
     modules: [
       'Foundations of User Experience (UX) Design',
       'Start the UX Design Process: Empathize, Define, and Ideate',
