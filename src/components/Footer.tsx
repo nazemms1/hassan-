@@ -2,7 +2,7 @@ import { profile } from '../data/portfolio'
 
 export default function Footer() {
   return (
-    <footer className="border-t border-rule bg-ground">
+    <footer className="bg-ground">
       <div className="mx-auto flex max-w-shell flex-col gap-4 px-6 py-8 sm:flex-row sm:items-center sm:justify-between sm:px-10">
         <p className="label">
           © {new Date().getFullYear()} {profile.name}

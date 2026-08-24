@@ -1,31 +1,13 @@
-import { disciplines, profile } from '../data/portfolio'
+import { disciplines, profile, stats } from '../data/portfolio'
 
 export default function Hero() {
   return (
     <section
       id="top"
-      className="relative flex min-h-[100svh] flex-col justify-center overflow-hidden border-b border-rule"
+      className="relative flex min-h-[100svh] flex-col justify-center overflow-hidden"
     >
-      {/* Ambient light for the glass to pick up — one hue, two intensities. */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0">
-        <span
-          className="orb h-[560px] w-[560px] opacity-[0.34]"
-          style={{ background: 'rgb(var(--accent))', top: '-220px', left: '-160px' }}
-        />
-        <span
-          className="orb h-[440px] w-[440px] opacity-[0.16]"
-          style={{
-            background: 'rgb(var(--accent))',
-            bottom: '-180px',
-            right: '-120px',
-            animationDelay: '-9s',
-            animationDuration: '28s',
-          }}
-        />
-      </div>
-
-      <div className="relative mx-auto grid w-full max-w-shell gap-14 px-6 pb-20 pt-32 sm:px-10 lg:grid-cols-[1.15fr_1fr] lg:items-center lg:gap-20 lg:pb-24 lg:pt-36">
-        <div className="flex flex-col items-start gap-7">
+      <div className="relative mx-auto grid w-full max-w-shell gap-10 px-6 pb-14 pt-24 sm:px-10 lg:grid-cols-[1.15fr_1fr] lg:items-center lg:gap-14 lg:pb-16 lg:pt-24">
+        <div className="hero-copy flex flex-col items-start gap-5">
           <span className="enter chip flex items-center gap-2">
             <span
               aria-hidden="true"
@@ -35,12 +17,14 @@ export default function Hero() {
             Available for work
           </span>
 
-          <h1 className="enter font-display text-[clamp(1.875rem,4vw,3rem)] font-semibold leading-[1.15] text-ink [animation-delay:100ms]">
+          <span className="enter hero-name label [animation-delay:60ms]">{profile.name}</span>
+
+          <h1 className="enter hero-title font-display font-semibold leading-[1.08] text-ink [animation-delay:100ms]">
             {profile.role}
-            <span className="mt-2 block text-muted">based in {profile.location}</span>
+            <span className="hero-title-location mt-2 block text-muted">based in {profile.location}</span>
           </h1>
 
-          <p className="enter prose-measure text-[1rem] [animation-delay:200ms]">
+          <p className="enter prose-measure text-[0.875rem] [animation-delay:200ms]">
             {profile.tagline}. {profile.longBio}
           </p>
 
@@ -66,11 +50,23 @@ export default function Hero() {
         </div>
 
         <div className="enter hero-visual [animation-delay:180ms]">
-          <div className="hero-portrait" aria-label="Portrait of Hassan">
-            <img src="/hassan-/Photo.png" alt="Portrait of Hassan" />
-            <span className="hero-portrait-label">Creative director / 2025</span>
+          <div className="hero-portrait-stage">
+            <span className="hero-ring hero-ring-one" aria-hidden="true" />
+            <span className="hero-ring hero-ring-two" aria-hidden="true" />
+            <span className="hero-ring hero-ring-three" aria-hidden="true" />
+            <div className="hero-portrait" aria-label="Portrait of Hassan">
+              <img src="/hassan-/Photo.png" alt="Portrait of Hassan" />
+            </div>
           </div>
-
+          <div className="hero-signature label">Mohamad — UI/UX &amp; art direction</div>
+          <div className="hero-stats panel">
+            {stats.map((stat) => (
+              <div key={stat.label} className="hero-stat">
+                <strong>{stat.value}</strong>
+                <span>{stat.label}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 

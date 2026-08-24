@@ -6,7 +6,7 @@ type Props = {
   label: string
   title: string
   intro?: string
-  /** Alternate ground, so consecutive bands separate without a hard rule. */
+  /** Kept for content compatibility; sections share one continuous ground. */
   alt?: boolean
   children: ReactNode
 }
@@ -15,23 +15,12 @@ type Props = {
  * A section chapter. Lays two blurred orbs behind the content so the glass
  * panes on top have real colour to pick up, and opens with a quiet header.
  */
-export default function Band({ id, label, title, intro, alt, children }: Props) {
+export default function Band({ id, label, title, intro, children }: Props) {
   return (
     <section
       id={id}
-      className={`relative scroll-mt-20 overflow-hidden ${alt ? 'bg-band' : 'bg-ground'}`}
+      className="relative scroll-mt-20 overflow-hidden"
     >
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0">
-        <span
-          className="orb h-[420px] w-[420px] opacity-[0.26]"
-          style={{ background: 'rgb(var(--accent))', top: '-150px', left: '-120px' }}
-        />
-        <span
-          className="orb h-[340px] w-[340px] opacity-[0.13]"
-          style={{ background: 'rgb(var(--accent))', bottom: '-150px', right: '-90px' }}
-        />
-      </div>
-
       <div className="relative mx-auto max-w-shell px-6 py-20 sm:px-10 lg:py-28">
         <Reveal>
           <header className="mb-12 flex max-w-3xl flex-col gap-4 lg:mb-16">
