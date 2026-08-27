@@ -53,9 +53,6 @@ export type Project = {
   placeholder?: boolean
 }
 
-// PLACEHOLDER: no case studies were supplied. These four slots carry the right
-// shape and disciplines — replace title / client / description / images with real
-// work and remove `placeholder: true` to drop the "slot open" marker.
 export const projects: Project[] = [
   {
     title: 'Pulsey',
@@ -81,24 +78,50 @@ export const projects: Project[] = [
     ],
   },
   {
-    title: 'Case study two',
-    client: 'Client name',
-    year: '2025',
-    discipline: 'Brand identity',
+    title: 'Marah',
+    client: 'Yslootahetech',
+    year: '2026',
+    discipline: 'Farm management & marketplace platform',
+    images: [
+      '/hassan-/images/marah/ChatGPT Image Aug 27, 2026, 02_56_05 PM.webp',
+      '/hassan-/images/marah/Thumbnails.webp',
+      '/hassan-/images/marah/Thumbnails-1.webp',
+      '/hassan-/images/marah/Thumbnails-2.webp',
+      '/hassan-/images/marah/Thumbnails-3.webp',
+      '/hassan-/images/marah/Thumbnails-4.webp',
+    ],
     description:
-      'A visual identity programme: mark, type system, colour, and the guidelines that keep it consistent across every touchpoint.',
-    contribution: ['Creative direction', 'Identity design', 'Guidelines'],
-    placeholder: true,
+      'Marah is an integrated farm management and multi-vendor marketplace platform designed to connect livestock management, veterinary care, daily farm operations, and agricultural commerce within one unified digital ecosystem. The platform supports multiple user roles, including livestock owners, veterinarians, workers, and vendors, with dedicated experiences and permissions tailored to each role. I designed the experience to simplify complex farm operations, from managing livestock records, medical history, vaccinations, tasks, and daily activities to monitoring reports and important updates. The platform also extends into a multi-vendor marketplace where users can discover agricultural products, browse categories, manage orders, and interact with different sellers. Vendor-focused experiences provide tools for product management, orders, sales insights, and marketplace operations. Throughout the project, I focused on clear information architecture, role-based user flows, intuitive dashboards, and reusable design patterns to maintain consistency across a large and feature-rich ecosystem. The final experience brings farm management and agricultural commerce together in a simple, scalable, and accessible digital product.',
+    contribution: [
+      'User flows',
+      'Role-based experiences',
+      'Farm management dashboard',
+      'Livestock & health records',
+      'Multi-vendor marketplace',
+    ],
   },
   {
-    title: 'Case study three',
-    client: 'Ys Lootah Tech',
-    year: '2024',
-    discipline: 'Mobile app',
+    title: 'Billionaire Signal',
+    client: 'Yslootahetech',
+    year: '2026',
+    discipline: 'Social trading platform',
+    images: [
+      '/hassan-/images/signals/ChatGPT Image Aug 27, 2026, 02_49_08 PM.webp',
+      '/hassan-/images/signals/Thumbnails.webp',
+      '/hassan-/images/signals/Thumbnails-1.webp',
+      '/hassan-/images/signals/Thumbnails-2.webp',
+      '/hassan-/images/signals/Thumbnails-3.webp',
+      '/hassan-/images/signals/Thumbnails-4.webp',
+    ],
     description:
-      'A user-centred mobile experience shaped by research and usability testing, delivered as interactive prototypes and production-ready UI.',
-    contribution: ['User flows', 'Prototyping', 'Usability testing'],
-    placeholder: true,
+      'Billionaire Signal is a social trading platform designed to create a seamless connection between investors and professional signal providers within one unified ecosystem. The platform supports two distinct user journeys: investors can discover and compare traders, explore their performance and trading history, subscribe to signal providers, and follow trading opportunities, while signal providers can create and publish signals, manage their activity, monitor subscribers, and track their overall performance. I designed the experience around simplifying complex financial information and making key trading data easy to scan, compare, and understand. Performance dashboards combine metrics such as win rate, profit, trading activity, and historical results with clear data visualizations to support faster decision-making. The experience also includes trader discovery, filtering and sorting, subscription management, signal creation, marketplace interactions, notifications, and detailed performance analytics. Throughout the project, I focused on building clear user flows, strong information hierarchy, reusable UI patterns, and a consistent visual system across both investor and signal provider experiences. The final design balances the data-heavy nature of a trading platform with a clean, intuitive interface that keeps important actions and insights accessible throughout the user journey.',
+    contribution: [
+      'User flows',
+      'Investor & trader experience',
+      'Trading dashboards',
+      'Data visualization',
+      'Signal management',
+    ],
   },
   {
     title: 'Case study four',
