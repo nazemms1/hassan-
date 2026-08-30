@@ -516,6 +516,20 @@ export default function AdminDashboard() {
                           <span className="text-xs font-mono text-faint">{proj.year}</span>
                         </div>
                         <p className="text-xs text-muted truncate">{proj.client}</p>
+                        {proj.contribution && proj.contribution.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {proj.contribution.slice(0, 3).map((tag, tIdx) => (
+                              <span key={tIdx} className="text-[0.6rem] px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-muted font-mono">
+                                {tag}
+                              </span>
+                            ))}
+                            {proj.contribution.length > 3 && (
+                              <span className="text-[0.6rem] px-1.5 py-0.5 text-faint font-mono">
+                                +{proj.contribution.length - 3}
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       {/* Action Bar (Reorder Up/Down, Hide/Show, Edit via Aside, Delete) */}
@@ -1246,6 +1260,72 @@ export default function AdminDashboard() {
                           </button>
                         </div>
                       ))}
+                    </div>
+                  </div>
+
+                  {/* Contribution Tags Editor */}
+                  <div className="flex flex-col gap-2 pt-2 border-t border-white/10">
+                    <label className="label text-[0.65rem] text-sky-400 flex items-center gap-1">
+                      <Tag className="w-3.5 h-3.5" /> Project Contributions & Tags ({draftProject.contribution?.length || 0})
+                    </label>
+
+                    {/* Chips */}
+                    <div className="flex flex-wrap gap-1.5 p-3 rounded-xl bg-black/40 border border-white/10 min-h-[46px]">
+                      {(draftProject.contribution || []).map((tag, tIdx) => (
+                        <span
+                          key={tIdx}
+                          className="chip flex items-center gap-1.5 py-1 px-2.5 text-[0.7rem] bg-white/10 border-white/20 text-ink rounded-full"
+                        >
+                          <span>{tag}</span>
+                          <button
+                            onClick={() =>
+                              setDraftProject({
+                                ...draftProject,
+                                contribution: draftProject.contribution.filter((_, i) => i !== tIdx),
+                              })
+                            }
+                            className="hover:text-red-400 text-faint"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* Add Tag Input */}
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Type tag (e.g. Wireframing) and press Enter..."
+                        value={newTagInput}
+                        onChange={(e) => setNewTagInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && newTagInput.trim()) {
+                            e.preventDefault()
+                            setDraftProject({
+                              ...draftProject,
+                              contribution: [...(draftProject.contribution || []), newTagInput.trim()],
+                            })
+                            setNewTagInput('')
+                          }
+                        }}
+                        className="flex-1 px-3 py-1.5 rounded-xl bg-black/50 border border-white/10 text-xs text-ink focus:outline-none focus:border-sky-400"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (newTagInput.trim()) {
+                            setDraftProject({
+                              ...draftProject,
+                              contribution: [...(draftProject.contribution || []), newTagInput.trim()],
+                            })
+                            setNewTagInput('')
+                          }
+                        }}
+                        className="btn btn-ghost text-xs py-1 px-3 font-mono"
+                      >
+                        <Plus className="w-3.5 h-3.5" /> Add
+                      </button>
                     </div>
                   </div>
                 </div>
