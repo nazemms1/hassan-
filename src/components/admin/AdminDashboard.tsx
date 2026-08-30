@@ -179,6 +179,8 @@ export default function AdminDashboard() {
         issuer: 'GOOGLE',
         date: new Date().getFullYear().toString(),
         description: 'Professional certificate covering user research and prototyping.',
+        image: '',
+        imageAlt: '',
       })
       setEditingItemIndex(null)
     }
@@ -1005,38 +1007,100 @@ export default function AdminDashboard() {
 
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {formData.certifications.map((cert, idx) => (
-                  <div key={cert.id || idx} className="panel p-5 border border-white/10 rounded-3xl bg-black/40 flex flex-col justify-between gap-4">
-                    <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                      <span className="chip text-[0.55rem] bg-indigo-500/10 text-indigo-300 border-indigo-500/30">
-                        {cert.issuer}
-                      </span>
-                      <span className="text-xs font-mono text-faint">{cert.date}</span>
+                  <div key={cert.id || idx} className="panel p-5 border border-white/10 rounded-3xl bg-black/40 flex flex-col justify-between gap-4 group hover:border-indigo-500/40 transition-all">
+                    {/* Certificate Image Preview */}
+                    <div className="relative aspect-[16/9] rounded-2xl overflow-hidden bg-black/60 border border-white/10 flex items-center justify-center">
+                      {cert.image ? (
+                        <img src={cert.image} alt={cert.imageAlt || cert.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                      ) : (
+                        <div className="flex flex-col items-center gap-1 text-faint">
+                          <ImageIcon className="w-7 h-7 opacity-40" />
+                          <span className="text-[0.65rem] font-mono">No Certificate Image</span>
+                        </div>
+                      )}
+
+                      <div className="absolute top-2.5 left-2.5">
+                        <span className="chip text-[0.55rem] bg-black/80 backdrop-blur-md border-indigo-500/30 text-indigo-300">
+                          {cert.issuer}
+                        </span>
+                      </div>
+
+                      <div className="absolute top-2.5 right-2.5">
+                        <span className="text-[0.65rem] font-mono px-2 py-0.5 rounded-full bg-black/80 text-faint border border-white/10">
+                          {cert.date}
+                        </span>
+                      </div>
                     </div>
 
-                    <div>
+                    <div className="flex flex-col gap-1">
                       <h3 className="font-display font-bold text-base text-ink">{cert.title}</h3>
-                      <p className="text-xs text-muted mt-1 leading-relaxed">{cert.description}</p>
+                      <p className="text-xs text-muted leading-relaxed line-clamp-3">{cert.description}</p>
                     </div>
 
                     <div className="flex items-center justify-between border-t border-white/10 pt-3 mt-auto">
-                      <button
-                        onClick={() => {
-                          const nextArr = formData.certifications.filter((_, i) => i !== idx)
-                          const nextData = { ...formData, certifications: nextArr }
-                          setFormData(nextData)
-                          handleSave(nextData)
-                        }}
-                        className="p-1.5 text-faint hover:text-red-400"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center gap-1">
+                        {/* Move Up */}
+                        <button
+                          disabled={idx === 0}
+                          onClick={() => {
+                            if (idx === 0) return
+                            const nextArr = [...formData.certifications]
+                            const temp = nextArr[idx - 1]
+                            nextArr[idx - 1] = nextArr[idx]
+                            nextArr[idx] = temp
+                            const nextData = { ...formData, certifications: nextArr }
+                            setFormData(nextData)
+                            handleSave(nextData)
+                          }}
+                          className="p-1.5 rounded-lg border border-white/10 hover:bg-white/10 text-indigo-400 disabled:opacity-20 transition-colors"
+                          title="Move Up"
+                        >
+                          <MoveUp className="w-3.5 h-3.5" />
+                        </button>
 
-                      <button
-                        onClick={() => openCertDrawer(cert, idx)}
-                        className="btn btn-ghost text-xs py-1 px-3 gap-1 text-indigo-400 font-mono"
-                      >
-                        <Edit3 className="w-3.5 h-3.5" /> Edit
-                      </button>
+                        {/* Move Down */}
+                        <button
+                          disabled={idx === formData.certifications.length - 1}
+                          onClick={() => {
+                            if (idx === formData.certifications.length - 1) return
+                            const nextArr = [...formData.certifications]
+                            const temp = nextArr[idx + 1]
+                            nextArr[idx + 1] = nextArr[idx]
+                            nextArr[idx] = temp
+                            const nextData = { ...formData, certifications: nextArr }
+                            setFormData(nextData)
+                            handleSave(nextData)
+                          }}
+                          className="p-1.5 rounded-lg border border-white/10 hover:bg-white/10 text-indigo-400 disabled:opacity-20 transition-colors"
+                          title="Move Down"
+                        >
+                          <MoveDown className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => {
+                            if (confirm(`Delete certification "${cert.title}"?`)) {
+                              const nextArr = formData.certifications.filter((_, i) => i !== idx)
+                              const nextData = { ...formData, certifications: nextArr }
+                              setFormData(nextData)
+                              handleSave(nextData)
+                            }
+                          }}
+                          className="p-1.5 text-faint hover:text-red-400 transition-colors"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+
+                        <button
+                          onClick={() => openCertDrawer(cert, idx)}
+                          className="btn btn-ghost text-xs py-1 px-3 gap-1 text-indigo-400 font-mono"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" /> Edit
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -1468,7 +1532,7 @@ export default function AdminDashboard() {
                       type="text"
                       value={draftCertification.title}
                       onChange={(e) => setDraftCertification({ ...draftCertification, title: e.target.value })}
-                      className="w-full px-3.5 py-2 rounded-xl bg-black/50 border border-white/10 text-xs text-ink"
+                      className="w-full px-3.5 py-2 rounded-xl bg-black/50 border border-white/10 text-xs text-ink focus:outline-none focus:border-indigo-400"
                     />
                   </div>
 
@@ -1479,7 +1543,7 @@ export default function AdminDashboard() {
                         type="text"
                         value={draftCertification.issuer}
                         onChange={(e) => setDraftCertification({ ...draftCertification, issuer: e.target.value })}
-                        className="w-full px-3.5 py-2 rounded-xl bg-black/50 border border-white/10 text-xs text-ink"
+                        className="w-full px-3.5 py-2 rounded-xl bg-black/50 border border-white/10 text-xs text-ink focus:outline-none focus:border-indigo-400"
                       />
                     </div>
 
@@ -1489,7 +1553,7 @@ export default function AdminDashboard() {
                         type="text"
                         value={draftCertification.date}
                         onChange={(e) => setDraftCertification({ ...draftCertification, date: e.target.value })}
-                        className="w-full px-3.5 py-2 rounded-xl bg-black/50 border border-white/10 text-xs text-ink"
+                        className="w-full px-3.5 py-2 rounded-xl bg-black/50 border border-white/10 text-xs text-ink focus:outline-none focus:border-indigo-400"
                       />
                     </div>
                   </div>
@@ -1500,8 +1564,78 @@ export default function AdminDashboard() {
                       rows={3}
                       value={draftCertification.description}
                       onChange={(e) => setDraftCertification({ ...draftCertification, description: e.target.value })}
-                      className="w-full px-3.5 py-2 rounded-xl bg-black/50 border border-white/10 text-xs text-ink"
+                      className="w-full px-3.5 py-2 rounded-xl bg-black/50 border border-white/10 text-xs text-ink focus:outline-none focus:border-indigo-400"
                     />
+                  </div>
+
+                  {/* Certificate Image Manager */}
+                  <div className="flex flex-col gap-2.5 pt-2 border-t border-white/10">
+                    <div className="flex items-center justify-between">
+                      <label className="label text-[0.65rem] text-indigo-400 flex items-center gap-1">
+                        <ImageIcon className="w-3.5 h-3.5" /> Certificate Image
+                      </label>
+                      <label className="btn btn-ghost text-[0.65rem] py-1 px-2.5 gap-1 cursor-pointer font-mono">
+                        <Upload className="w-3 h-3 text-indigo-400" />
+                        Upload File
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0]
+                            if (file) {
+                              const b64 = await convertFileToBase64(file)
+                              setDraftCertification({
+                                ...draftCertification,
+                                image: b64,
+                              })
+                            }
+                          }}
+                        />
+                      </label>
+                    </div>
+
+                    {/* Image URL Direct Input */}
+                    <div className="flex flex-col gap-1">
+                      <input
+                        type="text"
+                        placeholder="Or enter image URL (e.g. /hassan-/images/cert.webp or https://...)"
+                        value={draftCertification.image || ''}
+                        onChange={(e) => setDraftCertification({ ...draftCertification, image: e.target.value })}
+                        className="w-full px-3 py-1.5 rounded-xl bg-black/50 border border-white/10 text-xs font-mono text-ink focus:outline-none focus:border-indigo-400"
+                      />
+                    </div>
+
+                    {/* Image Preview Box */}
+                    {draftCertification.image ? (
+                      <div className="relative aspect-[16/9] rounded-xl overflow-hidden border border-indigo-500/30 bg-black/60 group mt-1">
+                        <img src={draftCertification.image} alt={draftCertification.imageAlt || 'Certificate preview'} className="w-full h-full object-cover" />
+                        <button
+                          onClick={() => setDraftCertification({ ...draftCertification, image: '' })}
+                          className="absolute top-2 right-2 p-1.5 rounded-full bg-red-600/90 text-white hover:bg-red-700 transition-colors"
+                          title="Remove Image"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="p-4 rounded-xl border border-dashed border-white/10 bg-black/30 flex flex-col items-center justify-center gap-1 text-faint">
+                        <ImageIcon className="w-6 h-6 opacity-30" />
+                        <span className="text-[0.65rem]">No image attached yet</span>
+                      </div>
+                    )}
+
+                    {/* Image Alt Text */}
+                    <div className="flex flex-col gap-1 mt-1">
+                      <label className="label text-[0.65rem] text-muted">Image Description / Alt Text</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. UI/UX Certificate from Google"
+                        value={draftCertification.imageAlt || ''}
+                        onChange={(e) => setDraftCertification({ ...draftCertification, imageAlt: e.target.value })}
+                        className="w-full px-3 py-1.5 rounded-xl bg-black/50 border border-white/10 text-xs text-ink focus:outline-none focus:border-indigo-400"
+                      />
+                    </div>
                   </div>
                 </div>
               )}

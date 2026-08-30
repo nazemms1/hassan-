@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { usePortfolio } from '../context/PortfolioContext'
 import Band from './Band'
 import Reveal from './Reveal'
@@ -5,6 +6,7 @@ import Reveal from './Reveal'
 export default function Credentials() {
   const { data } = usePortfolio()
   const { education, certifications } = data
+  const [selectedImage, setSelectedImage] = useState<{ src: string; title: string; alt?: string } | null>(null)
 
   return (
     <Band
@@ -56,11 +58,16 @@ export default function Credentials() {
             </p>
 
             {certification.image ? (
-              <a
-                className="group relative block overflow-hidden rounded-panel border border-white/10 bg-black/20 focus-visible:outline-offset-4"
-                href={certification.image}
-                rel="noreferrer"
-                target="_blank"
+              <button
+                type="button"
+                className="group relative block w-full overflow-hidden rounded-panel border border-white/10 bg-black/20 text-left focus-visible:outline-offset-4 cursor-pointer"
+                onClick={() =>
+                  setSelectedImage({
+                    src: certification.image!,
+                    title: certification.title,
+                    alt: certification.imageAlt,
+                  })
+                }
               >
                 <img
                   alt={certification.imageAlt ?? certification.title}
@@ -68,15 +75,47 @@ export default function Credentials() {
                   loading="lazy"
                   src={certification.image}
                 />
-                <span className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-black/75 via-black/30 to-transparent px-4 pb-3 pt-10 font-mono text-[0.625rem] uppercase tracking-[0.08em] text-white/90">
+                <span className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-black/80 via-black/40 to-transparent px-4 pb-3 pt-10 font-mono text-[0.625rem] uppercase tracking-[0.08em] text-white/90">
                   <span>View certificate</span>
-                  <span aria-hidden="true" className="text-base leading-none">↗</span>
+                  <span aria-hidden="true" className="text-base leading-none">🔍</span>
                 </span>
-              </a>
+              </button>
             ) : null}
           </Reveal>
         ))}
       </div>
+
+      {/* Interactive Certificate Lightbox Modal */}
+      {selectedImage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 backdrop-blur-md animate-[fade-in_200ms_ease-out]"
+          onClick={() => setSelectedImage(null)}
+        >
+          <div
+            className="relative max-h-[90vh] max-w-4xl overflow-hidden rounded-2xl border border-white/20 bg-[#090d1a] shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+              <h4 className="font-display text-sm font-bold text-ink truncate pr-4">
+                {selectedImage.title}
+              </h4>
+              <button
+                onClick={() => setSelectedImage(null)}
+                className="rounded-lg border border-white/10 px-2.5 py-1 font-mono text-xs text-muted hover:bg-white/10 hover:text-ink transition-colors cursor-pointer"
+              >
+                Close ✕
+              </button>
+            </div>
+            <div className="p-2 sm:p-4 bg-black/50 flex items-center justify-center max-h-[75vh] overflow-auto">
+              <img
+                src={selectedImage.src}
+                alt={selectedImage.alt || selectedImage.title}
+                className="max-h-[70vh] w-auto max-w-full rounded-lg object-contain shadow-lg"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </Band>
   )
 }
