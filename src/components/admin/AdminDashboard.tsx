@@ -530,7 +530,9 @@ export default function AdminDashboard() {
                               const temp = nextArr[originalIndex - 1]
                               nextArr[originalIndex - 1] = nextArr[originalIndex]
                               nextArr[originalIndex] = temp
-                              setFormData({ ...formData, projects: nextArr })
+                              const nextData = { ...formData, projects: nextArr }
+                              setFormData(nextData)
+                              handleSave(nextData)
                             }}
                             className="p-2 rounded-xl border border-white/10 hover:bg-white/10 text-sky-400 disabled:opacity-20 transition-colors"
                             title="Move Up"
@@ -547,7 +549,9 @@ export default function AdminDashboard() {
                               const temp = nextArr[originalIndex + 1]
                               nextArr[originalIndex + 1] = nextArr[originalIndex]
                               nextArr[originalIndex] = temp
-                              setFormData({ ...formData, projects: nextArr })
+                              const nextData = { ...formData, projects: nextArr }
+                              setFormData(nextData)
+                              handleSave(nextData)
                             }}
                             className="p-2 rounded-xl border border-white/10 hover:bg-white/10 text-sky-400 disabled:opacity-20 transition-colors"
                             title="Move Down"
@@ -560,7 +564,9 @@ export default function AdminDashboard() {
                             onClick={() => {
                               const nextArr = [...formData.projects]
                               nextArr[originalIndex].hidden = !nextArr[originalIndex].hidden
-                              setFormData({ ...formData, projects: nextArr })
+                              const nextData = { ...formData, projects: nextArr }
+                              setFormData(nextData)
+                              handleSave(nextData)
                             }}
                             className="p-2 rounded-xl border border-white/10 hover:bg-white/10 transition-colors"
                             title={proj.hidden ? 'Show Project' : 'Hide Project'}
@@ -579,7 +585,9 @@ export default function AdminDashboard() {
                             onClick={() => {
                               if (confirm(`Delete project "${proj.title}"?`)) {
                                 const nextArr = formData.projects.filter((_, i) => i !== originalIndex)
-                                setFormData({ ...formData, projects: nextArr })
+                                const nextData = { ...formData, projects: nextArr }
+                                setFormData(nextData)
+                                handleSave(nextData)
                               }
                             }}
                             className="p-2 rounded-xl border border-white/10 hover:bg-red-500/20 text-muted hover:text-red-400 transition-colors"
@@ -645,7 +653,9 @@ export default function AdminDashboard() {
                             const temp = nextArr[idx - 1]
                             nextArr[idx - 1] = nextArr[idx]
                             nextArr[idx] = temp
-                            setFormData({ ...formData, disciplines: nextArr })
+                            const nextData = { ...formData, disciplines: nextArr }
+                            setFormData(nextData)
+                            handleSave(nextData)
                           }}
                           className="p-1.5 rounded-lg border border-white/10 hover:bg-white/10 text-muted disabled:opacity-20"
                         >
@@ -659,7 +669,9 @@ export default function AdminDashboard() {
                             const temp = nextArr[idx + 1]
                             nextArr[idx + 1] = nextArr[idx]
                             nextArr[idx] = temp
-                            setFormData({ ...formData, disciplines: nextArr })
+                            const nextData = { ...formData, disciplines: nextArr }
+                            setFormData(nextData)
+                            handleSave(nextData)
                           }}
                           className="p-1.5 rounded-lg border border-white/10 hover:bg-white/10 text-muted disabled:opacity-20"
                         >
@@ -677,7 +689,9 @@ export default function AdminDashboard() {
                       <button
                         onClick={() => {
                           const nextArr = formData.disciplines.filter((_, i) => i !== idx)
-                          setFormData({ ...formData, disciplines: nextArr })
+                          const nextData = { ...formData, disciplines: nextArr }
+                          setFormData(nextData)
+                          handleSave(nextData)
                         }}
                         className="p-1.5 text-faint hover:text-red-400 transition-colors"
                       >
@@ -881,7 +895,9 @@ export default function AdminDashboard() {
                             const temp = nextArr[idx - 1]
                             nextArr[idx - 1] = nextArr[idx]
                             nextArr[idx] = temp
-                            setFormData({ ...formData, experience: nextArr })
+                            const nextData = { ...formData, experience: nextArr }
+                            setFormData(nextData)
+                            handleSave(nextData)
                           }}
                           className="p-2 rounded-xl border border-white/10 hover:bg-white/10 text-amber-400 disabled:opacity-20"
                           title="Move Up"
@@ -898,7 +914,9 @@ export default function AdminDashboard() {
                             const temp = nextArr[idx + 1]
                             nextArr[idx + 1] = nextArr[idx]
                             nextArr[idx] = temp
-                            setFormData({ ...formData, experience: nextArr })
+                            const nextData = { ...formData, experience: nextArr }
+                            setFormData(nextData)
+                            handleSave(nextData)
                           }}
                           className="p-2 rounded-xl border border-white/10 hover:bg-white/10 text-amber-400 disabled:opacity-20"
                           title="Move Down"
@@ -911,7 +929,9 @@ export default function AdminDashboard() {
                           onClick={() => {
                             if (confirm(`Delete role at ${role.company}?`)) {
                               const nextArr = formData.experience.filter((_, i) => i !== idx)
-                              setFormData({ ...formData, experience: nextArr })
+                              const nextData = { ...formData, experience: nextArr }
+                              setFormData(nextData)
+                              handleSave(nextData)
                             }
                           }}
                           className="p-2 rounded-xl border border-white/10 hover:bg-red-500/20 text-muted hover:text-red-400"
@@ -988,7 +1008,9 @@ export default function AdminDashboard() {
                       <button
                         onClick={() => {
                           const nextArr = formData.certifications.filter((_, i) => i !== idx)
-                          setFormData({ ...formData, certifications: nextArr })
+                          const nextData = { ...formData, certifications: nextArr }
+                          setFormData(nextData)
+                          handleSave(nextData)
                         }}
                         className="p-1.5 text-faint hover:text-red-400"
                       >
