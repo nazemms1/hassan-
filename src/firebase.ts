@@ -75,9 +75,20 @@ export function subscribeToPortfolioData(
     contentRef,
     (snapshot) => {
       if (snapshot.exists()) {
-        const data = snapshot.data() as PortfolioData
-        setCachedPortfolioData(data)
-        onData(data, true, false)
+        const cloudData = snapshot.data() as PortfolioData
+        const cached = getCachedPortfolioData()
+
+        const localSaveTime = parseInt(localStorage.getItem('portfolio_last_local_save') || '0', 10)
+        const cloudSyncedTime = parseInt(localStorage.getItem('portfolio_last_cloud_sync') || '0', 10)
+
+        // If local cache has newer unsynced edits than cloud, preserve local cache
+        if (localSaveTime > cloudSyncedTime && cached && cached.projects) {
+          onData(cached, false, false)
+          return
+        }
+
+        setCachedPortfolioData(cloudData)
+        onData(cloudData, true, false)
       } else {
         // Doc doesn't exist yet, seed initial data to Firestore
         const cached = getCachedPortfolioData()
@@ -109,10 +120,13 @@ export function subscribeToPortfolioData(
 export async function savePortfolioData(data: PortfolioData): Promise<{ cloudSynced: boolean }> {
   // Always update local cache first so the UI is 100% responsive and persistent
   setCachedPortfolioData(data)
+  localStorage.setItem('portfolio_last_local_save', Date.now().toString())
+
   const contentRef = doc(db, PORTFOLIO_DOC_PATH.collection, PORTFOLIO_DOC_PATH.doc)
 
   try {
     await setDoc(contentRef, data, { merge: true })
+    localStorage.setItem('portfolio_last_cloud_sync', Date.now().toString())
     return { cloudSynced: true }
   } catch (err: any) {
     if (err.code === 'permission-denied' || err.message?.includes('permissions')) {
