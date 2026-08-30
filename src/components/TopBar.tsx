@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { profile, sections } from '../data/portfolio'
+import { usePortfolio } from '../context/PortfolioContext'
+import { sections } from '../data/portfolio'
+import { Lock } from 'lucide-react'
 
-/** Which section is currently under the reading line. */
 function useActiveSection() {
   const [active, setActive] = useState('')
 
@@ -27,7 +28,6 @@ function useActiveSection() {
   return active
 }
 
-/** 0–1 through the document, for the progress hairline. */
 function useScrollProgress() {
   const [progress, setProgress] = useState(0)
 
@@ -56,12 +56,13 @@ function useScrollProgress() {
 }
 
 export default function TopBar() {
+  const { data } = usePortfolio()
+  const { profile } = data
   const active = useActiveSection()
   const progress = useScrollProgress()
   const [open, setOpen] = useState(false)
   const closeRef = useRef<HTMLButtonElement>(null)
 
-  // While the drawer is up: lock the page behind it and let Escape dismiss.
   useEffect(() => {
     if (!open) return
 
@@ -80,6 +81,13 @@ export default function TopBar() {
     }
   }, [open])
 
+  const nameInitials = profile.name
+    .split(' ')
+    .map((n) => n[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join('')
+
   return (
     <>
       <header className="fixed inset-x-0 top-0 z-40 border-b border-rule bg-ground/80 backdrop-blur-xl">
@@ -96,10 +104,10 @@ export default function TopBar() {
               className="grid h-8 w-8 place-items-center rounded-lg font-display text-[0.75rem] font-semibold transition-colors duration-500"
               style={{ background: 'rgb(var(--accent) / 0.16)', color: 'rgb(var(--accent))' }}
             >
-              MA
+              {nameInitials || 'HA'}
             </span>
             <span className="font-display text-[0.9375rem] font-semibold leading-none text-ink">
-              Mohamad Hassan Aljeshi
+              {profile.name}
             </span>
           </a>
 
@@ -135,6 +143,16 @@ export default function TopBar() {
               Hire me
             </a>
 
+            {/* CMS Admin Button */}
+            <a
+              href="#/admin"
+              title="CMS Admin Dashboard"
+              className="p-2 rounded-full border border-rule text-muted hover:text-ink hover:border-[rgb(var(--accent)/0.5)] transition-colors flex items-center gap-1.5 text-xs font-mono"
+            >
+              <Lock className="w-3.5 h-3.5 text-[rgb(var(--accent))]" />
+              <span className="hidden sm:inline">CMS</span>
+            </a>
+
             <button
               type="button"
               onClick={() => setOpen(true)}
@@ -163,7 +181,7 @@ export default function TopBar() {
       >
         <div className="flex items-center justify-between border-b border-rule px-6 py-3.5 sm:px-10">
           <span className="font-display text-[0.9375rem] font-semibold leading-none text-ink">
-            M. H. Aljeshi
+            {profile.name}
           </span>
           <button
             ref={closeRef}
@@ -209,6 +227,10 @@ export default function TopBar() {
         </nav>
 
         <div className="flex flex-col gap-3 border-t border-rule px-6 py-6 sm:px-10">
+          <a href="#/admin" onClick={() => setOpen(false)} className="btn btn-ghost justify-center gap-2">
+            <Lock className="w-4 h-4 text-[rgb(var(--accent))]" />
+            CMS Admin Dashboard
+          </a>
           <a href={`mailto:${profile.email}`} className="btn btn-primary justify-center">
             Start a project
           </a>

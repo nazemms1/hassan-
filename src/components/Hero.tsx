@@ -1,6 +1,9 @@
-import { disciplines, profile, stats } from '../data/portfolio'
+import { usePortfolio } from '../context/PortfolioContext'
 
 export default function Hero() {
+  const { data } = usePortfolio()
+  const { profile, disciplines, stats } = data
+
   return (
     <section
       id="top"
@@ -51,11 +54,11 @@ export default function Hero() {
 
         <div className="enter hero-visual [animation-delay:180ms]">
           <div className="hero-portrait-stage">
-              <div className="hero-portrait" aria-label="Portrait of Hassan">
-              <img src="/hassan-/Photo.png" alt="Portrait of Hassan" />
+            <div className="hero-portrait" aria-label={`Portrait of ${profile.name}`}>
+              <img src="/hassan-/Photo.png" alt={`Portrait of ${profile.name}`} />
             </div>
           </div>
-          <div className="hero-signature label">Mohamad — UI/UX &amp; art direction</div>
+          <div className="hero-signature label">{profile.name.split(' ')[0]} — UI/UX &amp; art direction</div>
           <div className="hero-stats panel">
             {stats.map((stat) => (
               <div key={stat.label} className="hero-stat">

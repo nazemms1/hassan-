@@ -1,39 +1,40 @@
-import { profile } from '../data/portfolio'
+import { usePortfolio } from '../context/PortfolioContext'
 import Band from './Band'
 import Reveal from './Reveal'
 
-
-/** Digits only, as tel: and wa.me both require. */
 const digits = (value: string) => value.replace(/\D/g, '')
 
-const channels = [
-  { label: 'Email', value: profile.email, href: `mailto:${profile.email}` },
-  { label: 'Phone', value: profile.phone, href: `tel:+${digits(profile.phone)}` },
-  {
-    label: 'WhatsApp',
-    value: profile.whatsapp,
-    href: `https://wa.me/${digits(profile.whatsapp)}`,
-  },
-  {
-    label: 'LinkedIn',
-    value: profile.socials.linkedin.label,
-    href: profile.socials.linkedin.url,
-  },
-  {
-    label: 'Portfolio',
-    value: profile.socials.portfolio.label,
-    href: profile.socials.portfolio.url,
-  },
-  { label: 'Based in', value: profile.location, href: undefined },
-]
-
 export default function Contact() {
+  const { data } = usePortfolio()
+  const { profile } = data
+
+  const channels = [
+    { label: 'Email', value: profile.email, href: `mailto:${profile.email}` },
+    { label: 'Phone', value: profile.phone, href: `tel:+${digits(profile.phone)}` },
+    {
+      label: 'WhatsApp',
+      value: profile.whatsapp,
+      href: `https://wa.me/${digits(profile.whatsapp)}`,
+    },
+    {
+      label: 'LinkedIn',
+      value: profile.socials.linkedin.label,
+      href: profile.socials.linkedin.url,
+    },
+    {
+      label: 'Portfolio',
+      value: profile.socials.portfolio.label,
+      href: profile.socials.portfolio.url,
+    },
+    { label: 'Based in', value: profile.location, href: undefined },
+  ]
+
   return (
     <Band
       id="contact"
       label="Contact"
       title="Let's make something"
-      intro="Available for creative direction, product design, and identity work — in Damascus or remote."
+      intro={`Available for creative direction, product design, and identity work — in ${profile.location} or remote.`}
       alt
     >
       <div className="flex flex-col gap-6">

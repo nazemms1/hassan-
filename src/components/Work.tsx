@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { projects } from '../data/portfolio'
+import { usePortfolio } from '../context/PortfolioContext'
+import type { Project } from '../data/portfolio'
 import Band from './Band'
 import Reveal from './Reveal'
-
 
 function Frame({ images, title }: { images?: string[]; title: string }) {
   if (images?.length) {
@@ -23,7 +23,6 @@ function Frame({ images, title }: { images?: string[]; title: string }) {
     )
   }
 
-  // No image supplied — an honest empty frame rather than a fake mockup.
   return (
     <div
       className="grid h-full w-full place-items-center"
@@ -41,7 +40,7 @@ function ProjectModal({
   project,
   onClose,
 }: {
-  project: (typeof projects)[number]
+  project: Project
   onClose: () => void
 }) {
   const [activeImage, setActiveImage] = useState(0)
@@ -199,13 +198,16 @@ function ProjectModal({
 }
 
 export default function Work() {
+  const { data } = usePortfolio()
+  const visibleProjects = data.projects.filter((p) => !p.hidden)
+
   const trackRef = useRef<HTMLDivElement>(null)
   const dragStartX = useRef(0)
   const dragStartScrollLeft = useRef(0)
   const isDragging = useRef(false)
   const didDrag = useRef(false)
   const suppressNextClick = useRef(false)
-  const [selectedProject, setSelectedProject] = useState<(typeof projects)[number] | null>(null)
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null)
 
   const nudge = (direction: 1 | -1) => {
     const track = trackRef.current
@@ -254,7 +256,7 @@ export default function Work() {
       <div className="flex flex-col gap-6">
         <div className="flex items-center justify-between gap-4">
           <span className="label">
-            {projects.length} projects — drag or use the arrows
+            {visibleProjects.length} projects — drag or use the arrows
           </span>
           <div className="flex gap-2">
             <button
@@ -292,9 +294,9 @@ export default function Work() {
             }}
             className={`no-scrollbar -mx-6 flex snap-x snap-mandatory gap-6 overflow-x-auto px-6 pb-2 touch-pan-x sm:-mx-10 sm:px-10 ${isDragging.current ? 'cursor-grabbing' : 'cursor-grab'}`}
           >
-            {projects.map((project) => (
+            {visibleProjects.map((project) => (
               <article
-                key={project.title}
+                key={project.id || project.title}
                 role="button"
                 tabIndex={0}
                 onClick={() => setSelectedProject(project)}

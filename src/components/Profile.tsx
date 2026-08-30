@@ -1,9 +1,13 @@
-import { disciplines, languages, profile } from '../data/portfolio'
+import { usePortfolio } from '../context/PortfolioContext'
 import Band from './Band'
 import Reveal from './Reveal'
 
-
 export default function Profile() {
+  const { data } = usePortfolio()
+  const { profile, disciplines, languages } = data
+
+  const currentRole = data.experience.find((r) => r.current) || data.experience[0]
+
   return (
     <Band
       id="profile"
@@ -67,21 +71,22 @@ export default function Profile() {
             </ul>
           </Reveal>
 
-          <Reveal delay={150} className="panel flex flex-col gap-4 p-6 sm:p-8">
-            <h3 className="label">Currently</h3>
-            <p className="text-[0.9375rem] leading-[1.7] text-muted">
-              Art Director & UI/UX Designer at Digidia, leading the creative vision across digital
-              products, branding, marketing, and multimedia.
-            </p>
-            <a
-              href="#experience"
-              className="label mt-1 inline-flex w-fit items-center gap-2 transition-colors duration-500"
-              style={{ color: 'rgb(var(--accent))' }}
-            >
-              Full history
-              <span aria-hidden="true">→</span>
-            </a>
-          </Reveal>
+          {currentRole && (
+            <Reveal delay={150} className="panel flex flex-col gap-4 p-6 sm:p-8">
+              <h3 className="label">Currently</h3>
+              <p className="text-[0.9375rem] leading-[1.7] text-muted">
+                {currentRole.title} at {currentRole.company}, leading creative vision and user experience.
+              </p>
+              <a
+                href="#experience"
+                className="label mt-1 inline-flex w-fit items-center gap-2 transition-colors duration-500"
+                style={{ color: 'rgb(var(--accent))' }}
+              >
+                Full history
+                <span aria-hidden="true">→</span>
+              </a>
+            </Reveal>
+          )}
         </div>
       </div>
     </Band>

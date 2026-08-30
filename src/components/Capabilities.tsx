@@ -1,12 +1,17 @@
 import { useState } from 'react'
-import { skills } from '../data/portfolio'
+import { usePortfolio } from '../context/PortfolioContext'
 import Band from './Band'
 import Reveal from './Reveal'
 
-
 export default function Capabilities() {
-  const [activeGroup, setActiveGroup] = useState(skills[0].category)
-  const group = skills.find((entry) => entry.category === activeGroup) ?? skills[0]
+  const { data } = usePortfolio()
+  const skills = data.skills
+
+  const [activeCategory, setActiveCategory] = useState<string | null>(null)
+  const currentCategory = activeCategory || skills[0]?.category || 'Design'
+  const group = skills.find((entry) => entry.category === currentCategory) ?? skills[0]
+
+  if (!skills || skills.length === 0) return null
 
   return (
     <Band
@@ -24,14 +29,14 @@ export default function Capabilities() {
             className="no-scrollbar flex gap-2 overflow-x-auto"
           >
             {skills.map((entry) => {
-              const isActive = entry.category === activeGroup
+              const isActive = entry.category === currentCategory
               return (
                 <button
                   key={entry.category}
                   type="button"
                   role="tab"
                   aria-selected={isActive}
-                  onClick={() => setActiveGroup(entry.category)}
+                  onClick={() => setActiveCategory(entry.category)}
                   className={`label whitespace-nowrap rounded-full border px-5 py-3 transition-[color,background-color,border-color] duration-500 ${
                     isActive ? 'text-ink' : 'border-rule text-muted hover:text-ink'
                   }`}
@@ -52,29 +57,31 @@ export default function Capabilities() {
           </div>
         </Reveal>
 
-        <Reveal delay={80}>
-          <ul
-            key={group.category}
-            className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
-          >
-            {group.items.map((item, i) => (
-              <li
-                key={item}
-                className="panel panel-hover flex items-center gap-4 px-5 py-4"
-                style={{ animation: `rise 600ms cubic-bezier(0.22,1,0.36,1) ${i * 40}ms both` }}
-              >
-                <span
-                  aria-hidden="true"
-                  className="h-1.5 w-1.5 shrink-0 rounded-full"
-                  style={{ background: 'rgb(var(--accent))' }}
-                />
-                <span className="text-[0.9375rem] font-medium leading-snug text-ink">
-                  {item}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </Reveal>
+        {group && (
+          <Reveal delay={80}>
+            <ul
+              key={group.category}
+              className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
+            >
+              {group.items.map((item, i) => (
+                <li
+                  key={item}
+                  className="panel panel-hover flex items-center gap-4 px-5 py-4"
+                  style={{ animation: `rise 600ms cubic-bezier(0.22,1,0.36,1) ${i * 40}ms both` }}
+                >
+                  <span
+                    aria-hidden="true"
+                    className="h-1.5 w-1.5 shrink-0 rounded-full"
+                    style={{ background: 'rgb(var(--accent))' }}
+                  />
+                  <span className="text-[0.9375rem] font-medium leading-snug text-ink">
+                    {item}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </Reveal>
+        )}
       </div>
     </Band>
   )

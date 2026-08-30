@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { experience, type Role } from '../data/portfolio'
+import { usePortfolio } from '../context/PortfolioContext'
+import type { Role } from '../data/portfolio'
 import Band from './Band'
 import Reveal from './Reveal'
 
-/** How many responsibilities show before the card has to be expanded. */
 const VISIBLE_POINTS = 3
 
 function RoleCard({ role }: { role: Role }) {
@@ -36,7 +36,6 @@ function RoleCard({ role }: { role: Role }) {
             key={point}
             className="flex gap-4"
             style={
-              // Only the newly revealed items animate; the first three are static.
               i >= VISIBLE_POINTS
                 ? {
                     animation: `rise 500ms cubic-bezier(0.22,1,0.36,1) ${
@@ -79,15 +78,17 @@ function RoleCard({ role }: { role: Role }) {
 }
 
 export default function Experience() {
+  const { data } = usePortfolio()
+
   return (
     <Band
       id="experience"
       label="Experience"
       title="Where the work happened"
-      intro="Three teams across Damascus and Dubai — product design, design systems, and now creative direction."
+      intro="Product design, design systems, and creative direction across multidisciplinary product teams."
     >
       <div className="flex flex-col gap-5">
-        {experience.map((role, i) => (
+        {data.experience.map((role, i) => (
           <Reveal key={`${role.company}-${role.period}`} delay={i * 90}>
             <RoleCard role={role} />
           </Reveal>
