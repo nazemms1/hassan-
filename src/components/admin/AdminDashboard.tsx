@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { usePortfolio } from '../../context/PortfolioContext'
-import { convertFileToBase64 } from '../../firebase'
+import { uploadPortfolioImage } from '../../firebase'
 import type { Certification, Discipline, Project, Role } from '../../data/portfolio'
 import {
   User,
@@ -73,6 +73,7 @@ export default function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState('')
   const [newTagInput, setNewTagInput] = useState('')
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
+  const [uploadingImage, setUploadingImage] = useState(false)
 
   // Keep local form in sync
   useEffect(() => {
@@ -101,9 +102,12 @@ export default function AdminDashboard() {
       await updatePortfolio(dataToSave)
       setSaveSuccess(true)
       setTimeout(() => setSaveSuccess(false), 2500)
-    } catch (err) {
+    } catch (err: any) {
       console.error('Save error:', err)
-      alert('Failed to save changes.')
+      alert(
+        `فشل حفظ التعديلات على Firestore: ${err?.message || 'خطأ غير معروف'}\n\n` +
+          `التعديلات محفوظة مؤقتاً بمتصفحك فقط ولن تظهر لباقي الزوار أو على باقي الأجهزة حتى تتم مزامنتها بنجاح. حاول الحفظ مرة أخرى.`
+      )
     } finally {
       setIsSaving(false)
     }
@@ -333,9 +337,21 @@ export default function AdminDashboard() {
             </div>
             <div className="flex flex-col min-w-0 flex-1">
               <span className="text-xs font-semibold text-ink truncate">{user?.email || 'Administrator'}</span>
-              <span className="text-[0.625rem] font-mono text-emerald-400 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                {syncStatus === 'live' ? 'Live Firestore' : 'Local Storage Mode'}
+              <span
+                className={`text-[0.625rem] font-mono flex items-center gap-1 ${
+                  syncStatus === 'error' ? 'text-red-400' : 'text-emerald-400'
+                }`}
+              >
+                <span
+                  className={`w-1.5 h-1.5 rounded-full animate-pulse ${
+                    syncStatus === 'error' ? 'bg-red-400' : 'bg-emerald-400'
+                  }`}
+                />
+                {syncStatus === 'live'
+                  ? 'Live Firestore'
+                  : syncStatus === 'error'
+                  ? 'Sync Failed — Not Saved'
+                  : 'Local Storage Mode'}
               </span>
             </div>
           </div>
@@ -1127,8 +1143,16 @@ export default function AdminDashboard() {
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="p-4 rounded-2xl border border-white/10 bg-black/50 flex flex-col gap-1">
                     <span className="label text-[0.6rem] text-faint">Realtime Connection</span>
-                    <span className="text-sm font-semibold font-mono text-emerald-400 mt-1 uppercase">
-                      {syncStatus === 'live' ? 'Live Synced' : 'Local Storage Mode'}
+                    <span
+                      className={`text-sm font-semibold font-mono mt-1 uppercase ${
+                        syncStatus === 'error' ? 'text-red-400' : 'text-emerald-400'
+                      }`}
+                    >
+                      {syncStatus === 'live'
+                        ? 'Live Synced'
+                        : syncStatus === 'error'
+                        ? 'Sync Failed — Not Saved'
+                        : 'Local Storage Mode'}
                     </span>
                   </div>
 
@@ -1172,8 +1196,8 @@ export default function AdminDashboard() {
                               const content = evt.target?.result as string
                               await importJson(content)
                               alert('JSON Backup restored successfully!')
-                            } catch (err) {
-                              alert('Failed to parse JSON file.')
+                            } catch (err: any) {
+                              alert(`Failed to restore backup: ${err?.message || 'invalid JSON file or Firestore write failed.'}`)
                             }
                           }
                           reader.readAsText(file)
@@ -1286,21 +1310,28 @@ export default function AdminDashboard() {
                       <label className="label text-[0.65rem] text-sky-400 flex items-center gap-1">
                         <ImageIcon className="w-3.5 h-3.5" /> Gallery ({draftProject.images?.length || 0})
                       </label>
-                      <label className="btn btn-ghost text-[0.65rem] py-1 px-2.5 gap-1 cursor-pointer font-mono">
+                      <label className={`btn btn-ghost text-[0.65rem] py-1 px-2.5 gap-1 font-mono ${uploadingImage ? 'opacity-50 pointer-events-none' : 'cursor-pointer'}`}>
                         <Upload className="w-3 h-3 text-sky-400" />
-                        Upload
+                        {uploadingImage ? 'Uploading...' : 'Upload'}
                         <input
                           type="file"
                           accept="image/*"
                           className="hidden"
+                          disabled={uploadingImage}
                           onChange={async (e) => {
                             const file = e.target.files?.[0]
-                            if (file) {
-                              const b64 = await convertFileToBase64(file)
-                              setDraftProject({
-                                ...draftProject,
-                                images: [...(draftProject.images || []), b64],
-                              })
+                            if (!file) return
+                            setUploadingImage(true)
+                            try {
+                              const url = await uploadPortfolioImage(file, 'projects')
+                              setDraftProject((prev) =>
+                                prev ? { ...prev, images: [...(prev.images || []), url] } : prev
+                              )
+                            } catch (err: any) {
+                              alert(`فشل رفع الصورة إلى Firebase Storage: ${err?.message || 'خطأ غير معروف'}`)
+                            } finally {
+                              setUploadingImage(false)
+                              e.target.value = ''
                             }
                           }}
                         />
@@ -1574,21 +1605,26 @@ export default function AdminDashboard() {
                       <label className="label text-[0.65rem] text-indigo-400 flex items-center gap-1">
                         <ImageIcon className="w-3.5 h-3.5" /> Certificate Image
                       </label>
-                      <label className="btn btn-ghost text-[0.65rem] py-1 px-2.5 gap-1 cursor-pointer font-mono">
+                      <label className={`btn btn-ghost text-[0.65rem] py-1 px-2.5 gap-1 font-mono ${uploadingImage ? 'opacity-50 pointer-events-none' : 'cursor-pointer'}`}>
                         <Upload className="w-3 h-3 text-indigo-400" />
-                        Upload File
+                        {uploadingImage ? 'Uploading...' : 'Upload File'}
                         <input
                           type="file"
                           accept="image/*"
                           className="hidden"
+                          disabled={uploadingImage}
                           onChange={async (e) => {
                             const file = e.target.files?.[0]
-                            if (file) {
-                              const b64 = await convertFileToBase64(file)
-                              setDraftCertification({
-                                ...draftCertification,
-                                image: b64,
-                              })
+                            if (!file) return
+                            setUploadingImage(true)
+                            try {
+                              const url = await uploadPortfolioImage(file, 'certifications')
+                              setDraftCertification((prev) => (prev ? { ...prev, image: url } : prev))
+                            } catch (err: any) {
+                              alert(`فشل رفع الصورة إلى Firebase Storage: ${err?.message || 'خطأ غير معروف'}`)
+                            } finally {
+                              setUploadingImage(false)
+                              e.target.value = ''
                             }
                           }}
                         />

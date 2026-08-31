@@ -65,18 +65,15 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const updatePortfolio = async (newData: PortfolioData) => {
     setSyncStatus('syncing')
+    setData(newData)
     try {
-      setData(newData)
       const res = await savePortfolioData(newData)
-      if (res.cloudSynced) {
-        setSyncStatus('live')
-      } else {
-        setSyncStatus('permission-restricted')
-      }
+      setSyncStatus(res.cloudSynced ? 'live' : 'permission-restricted')
       setLastSynced(new Date())
     } catch (err) {
       console.error('Failed to update portfolio:', err)
-      setSyncStatus('permission-restricted')
+      setSyncStatus('error')
+      throw err
     }
   }
 

@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase/app'
 import { getAuth } from 'firebase/auth'
 import { getFirestore, doc, onSnapshot, setDoc } from 'firebase/firestore'
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { getAnalytics, isSupported } from 'firebase/analytics'
 import type { PortfolioData } from './data/portfolio'
 import { initialPortfolio } from './data/portfolio'
@@ -19,6 +20,7 @@ const firebaseConfig = {
 export const app = initializeApp(firebaseConfig)
 export const auth = getAuth(app)
 export const db = getFirestore(app)
+export const storage = getStorage(app)
 
 // Analytics safely initialized if supported in current environment
 export let analytics: any = null
@@ -63,7 +65,10 @@ export function setCachedPortfolioData(data: PortfolioData): void {
 }
 
 /**
- * Subscribe to Firestore realtime updates for portfolio/content with offline local cache fallback
+ * Subscribe to Firestore realtime updates for portfolio/content with offline local cache fallback.
+ * Firestore is always treated as the source of truth once reachable — the caller (PortfolioContext)
+ * is responsible for optimistic local UI updates while a save is in flight, so this listener must
+ * never prefer a stale local cache over a confirmed cloud snapshot.
  */
 export function subscribeToPortfolioData(
   onData: (data: PortfolioData, isLive: boolean, permissionDenied?: boolean) => void,
@@ -76,17 +81,6 @@ export function subscribeToPortfolioData(
     (snapshot) => {
       if (snapshot.exists()) {
         const cloudData = snapshot.data() as PortfolioData
-        const cached = getCachedPortfolioData()
-
-        const localSaveTime = parseInt(localStorage.getItem('portfolio_last_local_save') || '0', 10)
-        const cloudSyncedTime = parseInt(localStorage.getItem('portfolio_last_cloud_sync') || '0', 10)
-
-        // If local cache has newer unsynced edits than cloud, preserve local cache
-        if (localSaveTime > cloudSyncedTime && cached && cached.projects) {
-          onData(cached, false, false)
-          return
-        }
-
         setCachedPortfolioData(cloudData)
         onData(cloudData, true, false)
       } else {
@@ -115,37 +109,39 @@ export function subscribeToPortfolioData(
 }
 
 /**
- * Save/Sync updated portfolio data to Firestore document portfolio/content with local cache fallback
+ * Save/Sync updated portfolio data to Firestore document portfolio/content with local cache fallback.
+ * Any failure other than a permission restriction (e.g. network loss, document-size limit exceeded)
+ * is rethrown so the caller can surface a real error instead of silently reporting success.
  */
 export async function savePortfolioData(data: PortfolioData): Promise<{ cloudSynced: boolean }> {
   // Always update local cache first so the UI is 100% responsive and persistent
   setCachedPortfolioData(data)
-  localStorage.setItem('portfolio_last_local_save', Date.now().toString())
 
   const contentRef = doc(db, PORTFOLIO_DOC_PATH.collection, PORTFOLIO_DOC_PATH.doc)
 
   try {
-    await setDoc(contentRef, data, { merge: true })
-    localStorage.setItem('portfolio_last_cloud_sync', Date.now().toString())
+    await setDoc(contentRef, data)
     return { cloudSynced: true }
   } catch (err: any) {
-    if (err.code === 'permission-denied' || err.message?.includes('permissions')) {
+    if (err.code === 'permission-denied') {
       console.info('Firestore write permission restricted. Changes saved locally in cache.')
       return { cloudSynced: false }
     }
-    console.warn('Firestore write failed, saved to local cache:', err)
-    return { cloudSynced: false }
+    console.error('Firestore write failed:', err)
+    throw err
   }
 }
 
 /**
- * Helper to convert local image File to Base64 string for zero-cost image uploads
+ * Upload an image file to Firebase Storage and return its public download URL.
+ * Images must never be embedded as Base64 inside the portfolio Firestore document —
+ * a Firestore document is capped at 1MiB, which a handful of embedded images would exceed
+ * and cause the whole portfolio save to fail.
  */
-export function convertFileToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.readAsDataURL(file)
-    reader.onload = () => resolve(reader.result as string)
-    reader.onerror = (error) => reject(error)
-  })
+export async function uploadPortfolioImage(file: File, folder: string): Promise<string> {
+  const safeName = file.name.replace(/[^a-zA-Z0-9_.-]/g, '_')
+  const path = `${folder}/${Date.now()}-${safeName}`
+  const storageRef = ref(storage, path)
+  await uploadBytes(storageRef, file)
+  return getDownloadURL(storageRef)
 }
