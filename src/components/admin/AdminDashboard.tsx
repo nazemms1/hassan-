@@ -72,6 +72,7 @@ export default function AdminDashboard() {
 
   const [searchQuery, setSearchQuery] = useState('')
   const [newTagInput, setNewTagInput] = useState('')
+  const [newImageUrlInput, setNewImageUrlInput] = useState('')
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
   const [uploadingImage, setUploadingImage] = useState(false)
 
@@ -1304,15 +1305,15 @@ export default function AdminDashboard() {
                     />
                   </div>
 
-                  {/* Image Manager in Aside */}
+                  {/* Project Image Gallery Manager */}
                   <div className="flex flex-col gap-2.5 pt-2 border-t border-white/10">
                     <div className="flex items-center justify-between">
                       <label className="label text-[0.65rem] text-sky-400 flex items-center gap-1">
-                        <ImageIcon className="w-3.5 h-3.5" /> Gallery ({draftProject.images?.length || 0})
+                        <ImageIcon className="w-3.5 h-3.5" /> Project Images Gallery ({draftProject.images?.length || 0})
                       </label>
                       <label className={`btn btn-ghost text-[0.65rem] py-1 px-2.5 gap-1 font-mono ${uploadingImage ? 'opacity-50 pointer-events-none' : 'cursor-pointer'}`}>
                         <Upload className="w-3 h-3 text-sky-400" />
-                        {uploadingImage ? 'Uploading...' : 'Upload'}
+                        {uploadingImage ? 'Uploading...' : 'Upload File'}
                         <input
                           type="file"
                           accept="image/*"
@@ -1328,7 +1329,7 @@ export default function AdminDashboard() {
                                 prev ? { ...prev, images: [...(prev.images || []), url] } : prev
                               )
                             } catch (err: any) {
-                              alert(`فشل رفع الصورة إلى Firebase Storage: ${err?.message || 'خطأ غير معروف'}`)
+                              alert(`فشل رفع الصورة: ${err?.message || 'خطأ غير معروف'}`)
                             } finally {
                               setUploadingImage(false)
                               e.target.value = ''
@@ -1338,21 +1339,73 @@ export default function AdminDashboard() {
                       </label>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-2">
+                    {/* Direct Image URL Input */}
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="text"
+                        placeholder="أو أدخل رابط صورة مباشر (https://... أو /images/...)"
+                        value={newImageUrlInput}
+                        onChange={(e) => setNewImageUrlInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && newImageUrlInput.trim()) {
+                            e.preventDefault()
+                            setDraftProject({
+                              ...draftProject,
+                              images: [...(draftProject.images || []), newImageUrlInput.trim()],
+                            })
+                            setNewImageUrlInput('')
+                          }
+                        }}
+                        className="flex-1 px-3 py-1.5 rounded-xl bg-black/50 border border-white/10 text-xs font-mono text-ink focus:outline-none focus:border-sky-400"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (newImageUrlInput.trim()) {
+                            setDraftProject({
+                              ...draftProject,
+                              images: [...(draftProject.images || []), newImageUrlInput.trim()],
+                            })
+                            setNewImageUrlInput('')
+                          }
+                        }}
+                        className="btn btn-ghost text-xs py-1.5 px-3 font-mono border border-sky-400/30 text-sky-400 hover:bg-sky-500/10"
+                      >
+                        إضافة رابط
+                      </button>
+                    </div>
+
+                    {/* Gallery Images List */}
+                    <div className="grid grid-cols-2 gap-2 mt-1">
                       {(draftProject.images || []).map((img, i) => (
-                        <div key={i} className="relative aspect-[4/3] rounded-xl overflow-hidden border border-white/10 bg-black/60 group">
-                          <img src={img} alt="" className="w-full h-full object-cover" />
-                          <button
-                            onClick={() =>
-                              setDraftProject({
-                                ...draftProject,
-                                images: draftProject.images?.filter((_, idx) => idx !== i),
-                              })
-                            }
-                            className="absolute top-1 right-1 p-1 rounded-full bg-red-600/90 text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
+                        <div key={i} className="flex flex-col gap-1 rounded-xl p-2 border border-white/10 bg-black/60 group">
+                          <div className="relative aspect-[4/3] rounded-lg overflow-hidden border border-white/10 bg-black">
+                            <img src={img} alt="" className="w-full h-full object-cover" />
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setDraftProject({
+                                  ...draftProject,
+                                  images: draftProject.images?.filter((_, idx) => idx !== i),
+                                })
+                              }
+                              className="absolute top-1 right-1 p-1 rounded-full bg-red-600/90 text-white hover:bg-red-700 transition-opacity"
+                              title="حذف الصورة"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                          <input
+                            type="text"
+                            value={img}
+                            onChange={(e) => {
+                              const nextImages = [...(draftProject.images || [])]
+                              nextImages[i] = e.target.value
+                              setDraftProject({ ...draftProject, images: nextImages })
+                            }}
+                            className="w-full px-2 py-1 rounded bg-black/40 border border-white/10 text-[0.65rem] font-mono text-muted focus:text-ink focus:border-sky-400 focus:outline-none truncate"
+                            title="تعديل رابط الصورة"
+                          />
                         </div>
                       ))}
                     </div>
