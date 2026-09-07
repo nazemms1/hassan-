@@ -1,7 +1,11 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
-import type { User } from 'firebase/auth'
-import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth'
-import { auth, getCachedPortfolioData, savePortfolioData, subscribeToPortfolioData } from '../firebase'
+import type { User } from '@supabase/supabase-js'
+import {
+  supabase,
+  getCachedPortfolioData,
+  savePortfolioData,
+  subscribeToPortfolioData,
+} from '../supabase'
 import type { PortfolioData } from '../data/portfolio'
 import { initialPortfolio } from '../data/portfolio'
 
@@ -30,7 +34,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [user, setUser] = useState<User | null>(null)
   const [authLoading, setAuthLoading] = useState<boolean>(true)
 
-  // Realtime Firestore subscription with local cache fallback
+  // Realtime Supabase subscription with local cache fallback
   useEffect(() => {
     setSyncStatus('syncing')
     const unsubscribe = subscribeToPortfolioData(
@@ -53,21 +57,31 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return () => unsubscribe()
   }, [])
 
-  // Firebase Auth listener
+  // Supabase Auth listener
   useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null)
+      setAuthLoading(false)
+    }).catch(() => {
       setAuthLoading(false)
     })
 
-    return () => unsubscribeAuth()
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+      setAuthLoading(false)
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
   }, [])
 
   const updatePortfolio = async (newData: PortfolioData) => {
     setSyncStatus('syncing')
-    setData(newData)
     try {
       const res = await savePortfolioData(newData)
+      const finalData = res.data || newData
+      setData(finalData)
       setSyncStatus(res.cloudSynced ? 'live' : 'permission-restricted')
       setLastSynced(new Date())
     } catch (err) {
@@ -78,11 +92,16 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }
 
   const login = async (email: string, pass: string) => {
-    await signInWithEmailAndPassword(auth, email, pass)
+    const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password: pass })
+    if (error) {
+      throw error
+    }
+    setUser(authData.user)
   }
 
   const logout = async () => {
-    await signOut(auth)
+    await supabase.auth.signOut()
+    setUser(null)
   }
 
   const exportJson = () => {

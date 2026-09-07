@@ -109,23 +109,145 @@ export function subscribeToPortfolioData(
 }
 
 /**
- * Save/Sync updated portfolio data to Firestore document portfolio/content with local cache fallback.
- * Any failure other than a permission restriction (e.g. network loss, document-size limit exceeded)
- * is rethrown so the caller can surface a real error instead of silently reporting success.
+ * Calculate the byte size of PortfolioData JSON string
  */
-export async function savePortfolioData(data: PortfolioData): Promise<{ cloudSynced: boolean }> {
+export function getPortfolioByteSize(data: PortfolioData): number {
+  try {
+    return new TextEncoder().encode(JSON.stringify(data)).length
+  } catch (e) {
+    return 0
+  }
+}
+
+/**
+ * Takes a Base64 Data URL (data:image/...) and compresses it to maximum dimensions (e.g. 750px)
+ * and lower JPEG quality (e.g. 0.6) so that its string size is kept under ~35-50 KB.
+ */
+export async function compressBase64DataUrl(
+  dataUrl: string,
+  maxWidth = 750,
+  quality = 0.6
+): Promise<string> {
+  if (!dataUrl || !dataUrl.startsWith('data:image/') || dataUrl.length < 30000) {
+    return dataUrl
+  }
+
+  return new Promise((resolve) => {
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      let width = img.width
+      let height = img.height
+
+      if (width > maxWidth || height > maxWidth) {
+        if (width > height) {
+          height = Math.round((height * maxWidth) / width)
+          width = maxWidth
+        } else {
+          width = Math.round((width * maxWidth) / height)
+          height = maxWidth
+        }
+      }
+
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext('2d')
+      if (!ctx) {
+        resolve(dataUrl)
+        return
+      }
+      ctx.drawImage(img, 0, 0, width, height)
+      const compressed = canvas.toDataURL('image/jpeg', quality)
+      resolve(compressed.length < dataUrl.length ? compressed : dataUrl)
+    }
+    img.onerror = () => resolve(dataUrl)
+    img.src = dataUrl
+  })
+}
+
+/**
+ * Scans PortfolioData and compresses all base64 data URLs in projects and certifications
+ * to ensure the total Firestore document payload size stays well below 1MB (typically ~200-400KB).
+ */
+export async function optimizePortfolioDataImages(
+  data: PortfolioData,
+  maxWidth = 750,
+  quality = 0.6
+): Promise<PortfolioData> {
+  const cloned: PortfolioData = JSON.parse(JSON.stringify(data))
+
+  if (Array.isArray(cloned.projects)) {
+    for (let i = 0; i < cloned.projects.length; i++) {
+      const proj = cloned.projects[i]
+      if (Array.isArray(proj.images)) {
+        const compressedImages = await Promise.all(
+          proj.images.map((img) => compressBase64DataUrl(img, maxWidth, quality))
+        )
+        cloned.projects[i].images = compressedImages
+      }
+    }
+  }
+
+  if (Array.isArray(cloned.certifications)) {
+    for (let i = 0; i < cloned.certifications.length; i++) {
+      const cert = cloned.certifications[i]
+      if (cert.image) {
+        cert.image = await compressBase64DataUrl(cert.image, maxWidth, quality)
+      }
+    }
+  }
+
+  return cloned
+}
+
+/**
+ * Save/Sync updated portfolio data to Firestore document portfolio/content with local cache fallback.
+ * Automatically compresses large Base64 images if the total document payload exceeds 650 KB or
+ * if Firestore rejects the write due to document size limits.
+ */
+export async function savePortfolioData(
+  data: PortfolioData
+): Promise<{ cloudSynced: boolean; data: PortfolioData }> {
+  let dataToSave = data
+  let currentSize = getPortfolioByteSize(dataToSave)
+
+  // Automatically optimize images if total document payload exceeds 650 KB
+  if (currentSize > 650000) {
+    try {
+      dataToSave = await optimizePortfolioDataImages(dataToSave, 700, 0.55)
+      currentSize = getPortfolioByteSize(dataToSave)
+    } catch (optErr) {
+      console.warn('Pre-save image optimization failed:', optErr)
+    }
+  }
+
   // Always update local cache first so the UI is 100% responsive and persistent
-  setCachedPortfolioData(data)
+  setCachedPortfolioData(dataToSave)
 
   const contentRef = doc(db, PORTFOLIO_DOC_PATH.collection, PORTFOLIO_DOC_PATH.doc)
 
   try {
-    await setDoc(contentRef, data)
-    return { cloudSynced: true }
+    await setDoc(contentRef, dataToSave)
+    return { cloudSynced: true, data: dataToSave }
   } catch (err: any) {
+    // If size limit exceeded, perform aggressive compression retry (550px, 0.45 quality)
+    if (err?.message?.includes('exceeds the maximum allowed size') || currentSize > 950000) {
+      console.warn('Document size limit exceeded. Retrying with aggressive image compression...')
+      try {
+        dataToSave = await optimizePortfolioDataImages(dataToSave, 550, 0.45)
+        await setDoc(contentRef, dataToSave)
+        setCachedPortfolioData(dataToSave)
+        return { cloudSynced: true, data: dataToSave }
+      } catch (retryErr: any) {
+        console.error('Firestore write failed after compression retry:', retryErr)
+        throw retryErr
+      }
+    }
+
     if (err.code === 'permission-denied') {
       console.info('Firestore write permission restricted. Changes saved locally in cache.')
-      return { cloudSynced: false }
+      return { cloudSynced: false, data: dataToSave }
     }
     console.error('Firestore write failed:', err)
     throw err
@@ -136,7 +258,7 @@ export async function savePortfolioData(data: PortfolioData): Promise<{ cloudSyn
  * Helper to compress and convert an image file to a lightweight JPEG Data URL.
  * Used as a seamless fallback if Firebase Storage upload fails (e.g. CORS preflight rules).
  */
-export async function compressImageToDataUrl(file: File, maxWidth = 1200, quality = 0.75): Promise<string> {
+export async function compressImageToDataUrl(file: File, maxWidth = 750, quality = 0.6): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = (e) => {
@@ -201,7 +323,7 @@ export async function uploadPortfolioImage(file: File, folder: string): Promise<
       err
     )
     try {
-      const compressedUrl = await compressImageToDataUrl(file, 1000, 0.7)
+      const compressedUrl = await compressImageToDataUrl(file, 750, 0.6)
       return compressedUrl
     } catch (fallbackErr) {
       console.error('Image compression fallback failed:', fallbackErr)
@@ -209,5 +331,6 @@ export async function uploadPortfolioImage(file: File, folder: string): Promise<
     }
   }
 }
+
 
 

@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { usePortfolio } from '../../context/PortfolioContext'
-import { uploadPortfolioImage } from '../../firebase'
+import { uploadPortfolioImage, getPortfolioByteSize, optimizePortfolioDataImages } from '../../supabase'
 import type { Certification, Discipline, Project, Role } from '../../data/portfolio'
 import {
   User,
@@ -21,43 +21,32 @@ import {
   RefreshCw,
   Download,
   UploadCloud,
-  Globe,
   Sparkles,
   Image as ImageIcon,
   Check,
   Search,
   X,
-  FileCode,
   Building,
-  ChevronRight,
   Edit3,
-  Layers,
   Tag,
   Mail,
-  Phone,
-  MessageSquare,
-  FileText,
   ShieldCheck,
   Menu,
-  Wrench,
   Palette,
-  Layout,
-  Share2,
-  CheckCircle,
-  Copy,
 } from 'lucide-react'
 
 type MainTab = 'projects' | 'disciplines' | 'profile' | 'experience' | 'skills' | 'system'
 type DrawerType = 'project' | 'role' | 'discipline' | 'certification' | null
 
 export default function AdminDashboard() {
-  const { data, updatePortfolio, syncStatus, lastSynced, user, logout, exportJson, importJson, seedDefaultData } =
+  const { data, updatePortfolio, syncStatus, lastSynced, user, logout, exportJson, importJson } =
     usePortfolio()
 
   const [activeTab, setActiveTab] = useState<MainTab>('projects')
   const [formData, setFormData] = useState(data)
   const [isSaving, setIsSaving] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState(false)
+  const [isOptimizing, setIsOptimizing] = useState(false)
 
   // Aside Drawer Panel States
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -111,6 +100,20 @@ export default function AdminDashboard() {
       )
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  const handleOptimizeImages = async () => {
+    setIsOptimizing(true)
+    try {
+      const optimized = await optimizePortfolioDataImages(formData, 700, 0.55)
+      setFormData(optimized)
+      await handleSave(optimized)
+      alert('تم ضغط وتحسين حجم جميع صور المشاريع بنجاح!')
+    } catch (err: any) {
+      alert(`فشل ضغط الصور: ${err?.message || 'خطأ غير معروف'}`)
+    } finally {
+      setIsOptimizing(false)
     }
   }
 
@@ -1162,6 +1165,35 @@ export default function AdminDashboard() {
                     <span className="text-sm font-semibold font-mono text-ink mt-1">
                       {lastSynced ? lastSynced.toLocaleTimeString() : 'N/A'}
                     </span>
+                  </div>
+
+                  <div className="p-4 sm:col-span-2 rounded-2xl border border-white/10 bg-black/50 flex flex-col gap-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="label text-[0.6rem] text-sky-400 uppercase font-mono">حجم بيانات Firestore</span>
+                        <span className="text-sm font-bold font-mono text-ink">
+                          {(getPortfolioByteSize(formData) / 1024).toFixed(1)} KB / 1024 KB
+                        </span>
+                      </div>
+                      <span
+                        className={`text-[0.65rem] font-mono px-2.5 py-1 rounded-full border ${
+                          getPortfolioByteSize(formData) > 850000
+                            ? 'bg-red-500/20 text-red-400 border-red-500/30'
+                            : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                        }`}
+                      >
+                        {getPortfolioByteSize(formData) > 850000 ? 'حجم مرتفع جداً' : 'حجم ممتاز'}
+                      </span>
+                    </div>
+
+                    <button
+                      onClick={handleOptimizeImages}
+                      disabled={isOptimizing}
+                      className="btn btn-ghost text-xs py-2 px-3 gap-2 justify-center font-mono border border-sky-400/30 text-sky-400 hover:bg-sky-500/10"
+                    >
+                      {isOptimizing ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                      <span>{isOptimizing ? 'جاري ضغط الصور...' : 'ضغط الصور وتقليل حجم البيانات تلقائياً'}</span>
+                    </button>
                   </div>
                 </div>
               </div>
