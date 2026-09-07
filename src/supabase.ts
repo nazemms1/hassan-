@@ -2,14 +2,191 @@ import { createClient } from '@supabase/supabase-js'
 import type { PortfolioData } from './data/portfolio'
 import { initialPortfolio } from './data/portfolio'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://ayubzogruomemjxhtfgo.supabase.co'
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_JDOKwfYwwkMHf6ohfZw9wQ_TYfCk7pg'
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://qagyqmnreozzksfgsuft.supabase.co'
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_wwRP5F9y-_mDNDMJXTueag_GTbvU3Qj'
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 const LOCAL_STORAGE_KEY = 'portfolio_content_cache'
 const BUCKET_NAME = 'app-images'
 const DATA_ROW_ID = 'content'
+
+/**
+ * Clear cached portfolio content from localStorage
+ */
+export function clearPortfolioCache(): void {
+  try {
+    localStorage.removeItem(LOCAL_STORAGE_KEY)
+    console.info('portfolio_content_cache removed successfully')
+  } catch (e) {
+    console.warn('Failed to delete portfolio_content_cache from localStorage:', e)
+  }
+}
+
+/**
+ * Sanitize and guarantee a safe PortfolioData object supporting both standard and custom database payload schemas
+ */
+export function sanitizePortfolioData(rawInput: any): any {
+  if (!rawInput) return initialPortfolio
+
+  let raw = rawInput
+  if (Array.isArray(raw)) {
+    raw = raw[0]
+  }
+  if (raw && typeof raw === 'object' && raw.data && typeof raw.data === 'object') {
+    raw = raw.data
+  }
+
+  if (!raw || typeof raw !== 'object') {
+    return initialPortfolio
+  }
+
+  const siteConfig = raw.siteConfig || {}
+
+  // 1. Profile Mapping
+  const name = siteConfig.name || raw.profile?.name || initialPortfolio.profile.name || ''
+  const title = siteConfig.role || siteConfig.tagline || raw.profile?.title || raw.profile?.role || initialPortfolio.profile.title || ''
+  const summary = siteConfig.summary || raw.summary || raw.profile?.summary || initialPortfolio.profile.summary || ''
+  const location = siteConfig.location || raw.profile?.location || initialPortfolio.profile.location || ''
+  const email = siteConfig.email || raw.profile?.email || initialPortfolio.profile.email || ''
+  const phone = siteConfig.phone || raw.profile?.phone || initialPortfolio.profile.phone || ''
+  const whatsapp = raw.profile?.whatsapp || phone || initialPortfolio.profile.whatsapp || ''
+  const available = typeof raw.profile?.available === 'boolean' ? raw.profile.available : true
+  const availableText = raw.profile?.availableText || 'Available for freelance & full-time roles'
+  const heroStats = Array.isArray(raw.heroStats)
+    ? raw.heroStats
+    : Array.isArray(raw.profile?.heroStats)
+    ? raw.profile.heroStats
+    : initialPortfolio.profile.heroStats
+
+  const socialsObj = {
+    linkedin: {
+      label: raw.profile?.socials?.linkedin?.label || 'LinkedIn',
+      url: siteConfig.socials?.linkedin || raw.profile?.socials?.linkedin?.url || initialPortfolio.profile.socials.linkedin.url,
+    },
+    portfolio: {
+      label: raw.profile?.socials?.portfolio?.label || 'Portfolio',
+      url: siteConfig.socials?.github || raw.profile?.socials?.portfolio?.url || initialPortfolio.profile.socials.portfolio.url,
+    },
+  }
+
+  const profile = {
+    name,
+    role: title,
+    tagline: siteConfig.tagline || raw.profile?.tagline || initialPortfolio.profile.tagline,
+    summary,
+    longBio: raw.profile?.longBio || summary || initialPortfolio.profile.longBio,
+    location,
+    email,
+    phone,
+    whatsapp,
+    socials: socialsObj,
+    available,
+    availableText,
+    heroStats,
+  }
+
+  // 2. Projects Mapping
+  const rawProjects = Array.isArray(raw.projects) ? raw.projects : []
+  const projects = rawProjects.length > 0
+    ? rawProjects.map((p: any, idx: number) => {
+        const images = Array.isArray(p.images) && p.images.length > 0
+          ? p.images
+          : p.imageBase64
+          ? [p.imageBase64]
+          : []
+
+        return {
+          id: p.id || `proj-${idx + 1}`,
+          title: p.name || p.title || `Project ${idx + 1}`,
+          client: p.subtitle || p.client || 'Client / Platform',
+          year: p.period || p.year || '2026',
+          discipline: Array.isArray(p.tags) ? p.tags.join(', ') : (p.discipline || 'Flutter / Mobile'),
+          description: p.description || '',
+          contribution: Array.isArray(p.highlights) ? p.highlights : (Array.isArray(p.contribution) ? p.contribution : []),
+          images: images,
+          url: p.url || '',
+          hidden: Boolean(p.hidden),
+        }
+      })
+    : initialPortfolio.projects
+
+  // 3. Roles / Experience Mapping
+  const rawExperience = Array.isArray(raw.experience)
+    ? raw.experience
+    : Array.isArray(raw.roles)
+    ? raw.roles
+    : []
+
+  const roles = rawExperience.length > 0
+    ? rawExperience.map((e: any, idx: number) => ({
+        id: e.id || `exp-${idx + 1}`,
+        title: e.role || e.title || 'Developer',
+        company: e.company || 'Company',
+        location: e.location || '',
+        period: e.period || '',
+        current: e.period?.toLowerCase().includes('present') || Boolean(e.current),
+        points: Array.isArray(e.highlights) ? e.highlights : (Array.isArray(e.points) ? e.points : []),
+      }))
+    : initialPortfolio.roles
+
+  // 4. Skills Mapping
+  let skills: any[] = []
+  if (Array.isArray(raw.skills)) {
+    skills = raw.skills
+  } else if (raw.skills && typeof raw.skills === 'object') {
+    const groups: any[] = []
+    if (Array.isArray(raw.skills.technical) && raw.skills.technical.length > 0) {
+      groups.push({ category: 'Technical Skills', items: raw.skills.technical })
+    }
+    if (Array.isArray(raw.skills.soft) && raw.skills.soft.length > 0) {
+      groups.push({ category: 'Soft Skills', items: raw.skills.soft })
+    }
+    skills = groups.length > 0 ? groups : initialPortfolio.skills
+  } else {
+    skills = initialPortfolio.skills
+  }
+
+  // 5. Socials Array Mapping
+  let socialsArr: any[] = []
+  if (Array.isArray(raw.socials) && raw.socials.length > 0) {
+    socialsArr = raw.socials
+  } else if (siteConfig.socials && typeof siteConfig.socials === 'object') {
+    if (siteConfig.socials.github) socialsArr.push({ platform: 'GitHub', url: siteConfig.socials.github })
+    if (siteConfig.socials.linkedin) socialsArr.push({ platform: 'LinkedIn', url: siteConfig.socials.linkedin })
+    if (siteConfig.socials.twitter) socialsArr.push({ platform: 'Twitter', url: siteConfig.socials.twitter })
+  }
+
+  // 6. Languages, Education, Certifications, Disciplines
+  const education = Array.isArray(raw.education)
+    ? raw.education.map((edu: any) => ({
+        degree: edu.degree || '',
+        school: edu.school || '',
+        period: edu.period || '',
+        detail: edu.detail || '',
+      }))
+    : initialPortfolio.education
+
+  const languages = Array.isArray(raw.languages) ? raw.languages : initialPortfolio.languages
+  const certifications = Array.isArray(raw.certifications) ? raw.certifications : initialPortfolio.certifications
+  const disciplines = Array.isArray(raw.disciplines) && raw.disciplines.length > 0
+    ? raw.disciplines
+    : initialPortfolio.disciplines
+
+  return {
+    profile,
+    projects,
+    disciplines,
+    roles,
+    experience: roles, // Alias for component compatibility
+    stats: heroStats,   // Alias for component compatibility
+    skills,
+    languages,
+    education,
+    certifications,
+    socials: socialsArr.length > 0 ? socialsArr : initialPortfolio.socials,
+  }
+}
 
 /**
  * Get initial cached portfolio data synchronously from localStorage or fallback seed
@@ -19,14 +196,14 @@ export function getCachedPortfolioData(): PortfolioData {
     const cached = localStorage.getItem(LOCAL_STORAGE_KEY)
     if (cached) {
       const parsed = JSON.parse(cached)
-      if (parsed && typeof parsed === 'object' && parsed.profile) {
-        return parsed
+      if (parsed && typeof parsed === 'object') {
+        return sanitizePortfolioData(parsed)
       }
     }
   } catch (e) {
     console.warn('Failed to read portfolio from local storage cache:', e)
   }
-  return initialPortfolio
+  return sanitizePortfolioData(initialPortfolio)
 }
 
 /**
@@ -34,14 +211,15 @@ export function getCachedPortfolioData(): PortfolioData {
  */
 export function setCachedPortfolioData(data: PortfolioData): void {
   try {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(data))
+    const sanitized = sanitizePortfolioData(data)
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(sanitized))
   } catch (e) {
     console.warn('Failed to save portfolio to local storage cache:', e)
   }
 }
 
 /**
- * Subscribe to Supabase realtime updates for public.app_data where id = 'content'
+ * Subscribe to Supabase realtime updates for public.app_data
  */
 export function subscribeToPortfolioData(
   onData: (data: PortfolioData, isLive: boolean, permissionDenied?: boolean) => void,
@@ -51,38 +229,44 @@ export function subscribeToPortfolioData(
 
   const loadInitialData = async () => {
     try {
+      // 1. Try single fetch by ID 'content'
       const { data: row, error } = await supabase
         .from('app_data')
-        .select('data')
+        .select('*')
         .eq('id', DATA_ROW_ID)
         .maybeSingle()
 
       if (!isMounted) return
 
-      if (error) {
-        console.warn('Supabase fetch error, using local cache fallback:', error.message)
-        const cached = getCachedPortfolioData()
-        onData(cached, false, false)
-        if (onError) onError(new Error(error.message))
+      if (!error && row) {
+        const cloudData = sanitizePortfolioData(row.data || row)
+        setCachedPortfolioData(cloudData)
+        onData(cloudData, true, false)
         return
       }
 
-      if (row && row.data) {
-        const cloudData = row.data as PortfolioData
+      // 2. Fallback: select all rows from app_data if 'content' wasn't directly found
+      const { data: allRows, error: allErr } = await supabase
+        .from('app_data')
+        .select('*')
+
+      if (!isMounted) return
+
+      if (!allErr && allRows && allRows.length > 0) {
+        const targetRow = allRows.find((r: any) => r.id === DATA_ROW_ID) || allRows[0]
+        const cloudData = sanitizePortfolioData(targetRow.data || targetRow)
         setCachedPortfolioData(cloudData)
         onData(cloudData, true, false)
-      } else {
-        // Doc doesn't exist yet, seed initial data to Supabase
-        const cached = getCachedPortfolioData()
-        const { error: seedError } = await supabase
-          .from('app_data')
-          .upsert({ id: DATA_ROW_ID, data: cached, updated_at: new Date().toISOString() })
-
-        if (seedError) {
-          console.warn('Could not auto-seed initial portfolio data to Supabase:', seedError.message)
-        }
-        onData(cached, true, false)
+        return
       }
+
+      // 3. Document doesn't exist yet, seed initial data to Supabase
+      const cached = getCachedPortfolioData()
+      await supabase
+        .from('app_data')
+        .upsert({ id: DATA_ROW_ID, data: cached, updated_at: new Date().toISOString() })
+
+      onData(cached, true, false)
     } catch (err: any) {
       if (!isMounted) return
       console.warn('Supabase load error:', err)
@@ -103,12 +287,12 @@ export function subscribeToPortfolioData(
         event: '*',
         schema: 'public',
         table: 'app_data',
-        filter: `id=eq.${DATA_ROW_ID}`,
       },
       (payload) => {
         if (!isMounted) return
-        if (payload.new && (payload.new as any).data) {
-          const freshData = (payload.new as any).data as PortfolioData
+        if (payload.new) {
+          const rawPayload = (payload.new as any).data || payload.new
+          const freshData = sanitizePortfolioData(rawPayload)
           setCachedPortfolioData(freshData)
           onData(freshData, true, false)
         }
@@ -132,6 +316,103 @@ export function getPortfolioByteSize(data: PortfolioData): number {
     return 0
   }
 }
+
+export interface StorageCapacityStats {
+  payloadBytes: number
+  payloadKb: number
+  payloadMaxKb: number
+  payloadPercentUsed: number
+  mediaCount: number
+  embeddedMediaBytes: number
+  embeddedMediaKb: number
+  storageQuotaBytes: number
+  storageQuotaMb: number
+  totalUsedBytes: number
+  totalUsedMb: number
+  remainingBytes: number
+  remainingMb: number
+  remainingGb: number
+  storagePercentUsed: number
+  statusLevel: 'healthy' | 'warning' | 'critical'
+}
+
+/**
+ * Calculate full storage space stats, remaining free capacity in Supabase
+ */
+export function getStorageCapacityStats(
+  data: PortfolioData,
+  storageQuotaMb = 1000
+): StorageCapacityStats {
+  const payloadBytes = getPortfolioByteSize(data)
+  const payloadKb = payloadBytes / 1024
+  const payloadMaxKb = 1024 // 1 MB limit per Postgres JSONB row
+  const payloadPercentUsed = Math.min(100, (payloadKb / payloadMaxKb) * 100)
+
+  let mediaCount = 0
+  let embeddedMediaBytes = 0
+
+  if (Array.isArray(data.projects)) {
+    data.projects.forEach((proj) => {
+      if (Array.isArray(proj.images)) {
+        proj.images.forEach((img) => {
+          if (img) {
+            mediaCount++
+            if (img.startsWith('data:image/')) {
+              embeddedMediaBytes += new TextEncoder().encode(img).length
+            }
+          }
+        })
+      }
+    })
+  }
+
+  if (Array.isArray(data.certifications)) {
+    data.certifications.forEach((cert) => {
+      if (cert.image) {
+        mediaCount++
+        if (cert.image.startsWith('data:image/')) {
+          embeddedMediaBytes += new TextEncoder().encode(cert.image).length
+        }
+      }
+    })
+  }
+
+  const embeddedMediaKb = embeddedMediaBytes / 1024
+  const storageQuotaBytes = storageQuotaMb * 1024 * 1024
+  const totalUsedBytes = payloadBytes
+  const totalUsedMb = totalUsedBytes / (1024 * 1024)
+  const remainingBytes = Math.max(0, storageQuotaBytes - totalUsedBytes)
+  const remainingMb = remainingBytes / (1024 * 1024)
+  const remainingGb = remainingMb / 1024
+  const storagePercentUsed = Math.min(100, (totalUsedBytes / storageQuotaBytes) * 100)
+
+  let statusLevel: 'healthy' | 'warning' | 'critical' = 'healthy'
+  if (payloadPercentUsed > 85 || storagePercentUsed > 85) {
+    statusLevel = 'critical'
+  } else if (payloadPercentUsed > 60 || storagePercentUsed > 60) {
+    statusLevel = 'warning'
+  }
+
+  return {
+    payloadBytes,
+    payloadKb,
+    payloadMaxKb,
+    payloadPercentUsed,
+    mediaCount,
+    embeddedMediaBytes,
+    embeddedMediaKb,
+    storageQuotaBytes,
+    storageQuotaMb,
+    totalUsedBytes,
+    totalUsedMb,
+    remainingBytes,
+    remainingMb,
+    remainingGb,
+    storagePercentUsed,
+    statusLevel,
+  }
+}
+
 
 /**
  * Takes a Base64 Data URL (data:image/...) and compresses it
@@ -210,7 +491,7 @@ export async function optimizePortfolioDataImages(
     }
   }
 
-  return cloned
+  return sanitizePortfolioData(cloned)
 }
 
 /**
@@ -219,7 +500,7 @@ export async function optimizePortfolioDataImages(
 export async function savePortfolioData(
   data: PortfolioData
 ): Promise<{ cloudSynced: boolean; data: PortfolioData }> {
-  const dataToSave = data
+  const dataToSave = sanitizePortfolioData(data)
 
   // Always update local cache first
   setCachedPortfolioData(dataToSave)

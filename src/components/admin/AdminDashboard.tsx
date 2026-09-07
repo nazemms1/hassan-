@@ -1,6 +1,11 @@
 import { useState, useEffect } from 'react'
 import { usePortfolio } from '../../context/PortfolioContext'
-import { uploadPortfolioImage, getPortfolioByteSize, optimizePortfolioDataImages } from '../../supabase'
+import {
+  uploadPortfolioImage,
+  getPortfolioByteSize,
+  optimizePortfolioDataImages,
+  getStorageCapacityStats,
+} from '../../supabase'
 import type { Certification, Discipline, Project, Role } from '../../data/portfolio'
 import {
   User,
@@ -33,20 +38,35 @@ import {
   ShieldCheck,
   Menu,
   Palette,
+  HardDrive,
+  Server,
+  Activity,
+  CloudUpload,
 } from 'lucide-react'
 
 type MainTab = 'projects' | 'disciplines' | 'profile' | 'experience' | 'skills' | 'system'
 type DrawerType = 'project' | 'role' | 'discipline' | 'certification' | null
 
 export default function AdminDashboard() {
-  const { data, updatePortfolio, syncStatus, lastSynced, user, logout, exportJson, importJson } =
-    usePortfolio()
+  const {
+    data,
+    updatePortfolio,
+    syncStatus,
+    lastSynced,
+    user,
+    logout,
+    exportJson,
+    importJson,
+    seedDefaultData,
+  } = usePortfolio()
 
   const [activeTab, setActiveTab] = useState<MainTab>('projects')
   const [formData, setFormData] = useState(data)
   const [isSaving, setIsSaving] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState(false)
   const [isOptimizing, setIsOptimizing] = useState(false)
+  const [isForceSyncing, setIsForceSyncing] = useState(false)
+
 
   // Aside Drawer Panel States
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -95,7 +115,7 @@ export default function AdminDashboard() {
     } catch (err: any) {
       console.error('Save error:', err)
       alert(
-        `فشل حفظ التعديلات على Firestore: ${err?.message || 'خطأ غير معروف'}\n\n` +
+        `فشل حفظ التعديلات على Supabase: ${err?.message || 'خطأ غير معروف'}\n\n` +
           `التعديلات محفوظة مؤقتاً بمتصفحك فقط ولن تظهر لباقي الزوار أو على باقي الأجهزة حتى تتم مزامنتها بنجاح. حاول الحفظ مرة أخرى.`
       )
     } finally {
@@ -352,7 +372,7 @@ export default function AdminDashboard() {
                   }`}
                 />
                 {syncStatus === 'live'
-                  ? 'Live Firestore'
+                  ? 'Live Supabase'
                   : syncStatus === 'error'
                   ? 'Sync Failed — Not Saved'
                   : 'Local Storage Mode'}
@@ -1129,119 +1149,229 @@ export default function AdminDashboard() {
           )}
 
           {/* =================================================================
-              TAB 6: SYSTEM & BACKUP
+              TAB 6: SYSTEM & BACKUP & SUPABASE STORAGE MONITOR
            ================================================================= */}
-          {activeTab === 'system' && (
-            <div className="grid gap-6 lg:grid-cols-2 items-start">
-              <div className="panel p-6 sm:p-8 flex flex-col gap-5 border border-white/10 rounded-3xl bg-black/40">
-                <div className="flex items-center gap-3 border-b border-white/10 pb-4">
-                  <div className="w-10 h-10 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center justify-center">
-                    <Database className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-display font-bold text-base text-ink">System Diagnostics</h3>
-                    <p className="text-xs text-muted">Realtime synchronization health</p>
-                  </div>
-                </div>
+          {activeTab === 'system' && (() => {
+            const storageStats = getStorageCapacityStats(formData)
 
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="p-4 rounded-2xl border border-white/10 bg-black/50 flex flex-col gap-1">
-                    <span className="label text-[0.6rem] text-faint">Realtime Connection</span>
+            const handleForceCloudSync = async () => {
+              setIsForceSyncing(true)
+              try {
+                await updatePortfolio(formData)
+                alert('تم رفع ومزامنة كامل بيانات الموقع والادمن إلى Supabase بنجاح!')
+              } catch (err: any) {
+                alert(`فشل رفع البيانات إلى Supabase: ${err?.message || 'خطأ غير معروف'}`)
+              } finally {
+                setIsForceSyncing(false)
+              }
+            }
+
+            return (
+              <div className="grid gap-6 lg:grid-cols-2 items-start">
+                {/* Panel 1: Supabase Realtime & Cloud Storage Monitor */}
+                <div className="panel p-6 sm:p-8 flex flex-col gap-6 border border-white/10 rounded-3xl bg-black/40">
+                  <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center justify-center">
+                        <HardDrive className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h3 className="font-display font-bold text-base text-ink">مساحة التخزين وحالة Supabase</h3>
+                        <p className="text-xs text-muted">مراقبة الاتصال، حجم البيانات، والمساحة المتبقية</p>
+                      </div>
+                    </div>
+
                     <span
-                      className={`text-sm font-semibold font-mono mt-1 uppercase ${
-                        syncStatus === 'error' ? 'text-red-400' : 'text-emerald-400'
+                      className={`text-[0.65rem] font-mono px-3 py-1 rounded-full border ${
+                        syncStatus === 'live'
+                          ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                          : syncStatus === 'error'
+                          ? 'bg-red-500/20 text-red-400 border-red-500/30'
+                          : 'bg-amber-500/20 text-amber-400 border-amber-500/30'
                       }`}
                     >
-                      {syncStatus === 'live'
-                        ? 'Live Synced'
-                        : syncStatus === 'error'
-                        ? 'Sync Failed — Not Saved'
-                        : 'Local Storage Mode'}
+                      {syncStatus === 'live' ? 'Live Connected' : syncStatus === 'error' ? 'Connection Error' : 'Local Cache'}
                     </span>
                   </div>
 
-                  <div className="p-4 rounded-2xl border border-white/10 bg-black/50 flex flex-col gap-1">
-                    <span className="label text-[0.6rem] text-faint">Last Sync</span>
-                    <span className="text-sm font-semibold font-mono text-ink mt-1">
-                      {lastSynced ? lastSynced.toLocaleTimeString() : 'N/A'}
-                    </span>
+                  {/* Diagnostic Badges Grid */}
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="p-4 rounded-2xl border border-white/10 bg-black/50 flex flex-col gap-1">
+                      <span className="label text-[0.6rem] text-faint flex items-center gap-1.5">
+                        <Server className="w-3.5 h-3.5 text-sky-400" /> Supabase Endpoint
+                      </span>
+                      <span className="text-xs font-mono font-semibold text-sky-300 mt-1 truncate">
+                        qagyqmnreozzksfgsuft
+                      </span>
+                    </div>
+
+                    <div className="p-4 rounded-2xl border border-white/10 bg-black/50 flex flex-col gap-1">
+                      <span className="label text-[0.6rem] text-faint flex items-center gap-1.5">
+                        <Activity className="w-3.5 h-3.5 text-emerald-400" /> آخر مزامنة ناجحة
+                      </span>
+                      <span className="text-xs font-mono font-semibold text-ink mt-1">
+                        {lastSynced ? lastSynced.toLocaleTimeString() : 'محدث الآن'}
+                      </span>
+                    </div>
                   </div>
 
-                  <div className="p-4 sm:col-span-2 rounded-2xl border border-white/10 bg-black/50 flex flex-col gap-3">
+                  {/* Storage Progress Meter 1: Database JSON Payload */}
+                  <div className="p-5 rounded-2xl border border-white/10 bg-black/60 flex flex-col gap-3">
                     <div className="flex items-center justify-between">
                       <div className="flex flex-col gap-0.5">
-                        <span className="label text-[0.6rem] text-sky-400 uppercase font-mono">حجم بيانات Firestore</span>
-                        <span className="text-sm font-bold font-mono text-ink">
-                          {(getPortfolioByteSize(formData) / 1024).toFixed(1)} KB / 1024 KB
+                        <span className="label text-[0.65rem] text-sky-400 font-mono uppercase">
+                          حجم سجل البيانات (Postgres JSONB Row)
+                        </span>
+                        <span className="text-base font-bold font-mono text-ink">
+                          {storageStats.payloadKb.toFixed(1)} KB <span className="text-xs font-normal text-muted">/ {storageStats.payloadMaxKb} KB Max</span>
                         </span>
                       </div>
                       <span
                         className={`text-[0.65rem] font-mono px-2.5 py-1 rounded-full border ${
-                          getPortfolioByteSize(formData) > 850000
+                          storageStats.payloadPercentUsed > 80
                             ? 'bg-red-500/20 text-red-400 border-red-500/30'
+                            : storageStats.payloadPercentUsed > 50
+                            ? 'bg-amber-500/20 text-amber-400 border-amber-500/30'
                             : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
                         }`}
                       >
-                        {getPortfolioByteSize(formData) > 850000 ? 'حجم مرتفع جداً' : 'حجم ممتاز'}
+                        {(100 - storageStats.payloadPercentUsed).toFixed(1)}% متبقي
                       </span>
                     </div>
 
+                    {/* Progress Bar */}
+                    <div className="w-full h-2.5 rounded-full bg-white/10 overflow-hidden relative">
+                      <div
+                        className={`h-full transition-all duration-500 rounded-full ${
+                          storageStats.payloadPercentUsed > 80
+                            ? 'bg-gradient-to-r from-red-500 to-rose-600'
+                            : storageStats.payloadPercentUsed > 50
+                            ? 'bg-gradient-to-r from-amber-400 to-orange-500'
+                            : 'bg-gradient-to-r from-sky-400 via-blue-500 to-emerald-400'
+                        }`}
+                        style={{ width: `${Math.max(3, storageStats.payloadPercentUsed)}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Storage Progress Meter 2: Overall Free Space Capacity */}
+                  <div className="p-5 rounded-2xl border border-white/10 bg-black/60 flex flex-col gap-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="label text-[0.65rem] text-emerald-400 font-mono uppercase">
+                          المساحة المتبقية في حساب Supabase Cloud
+                        </span>
+                        <span className="text-base font-bold font-mono text-ink">
+                          {storageStats.remainingMb > 100
+                            ? `${(storageStats.remainingMb / 1024).toFixed(2)} GB المتبقية`
+                            : `${storageStats.remainingMb.toFixed(1)} MB المتبقية`}
+                        </span>
+                      </div>
+                      <span className="text-[0.65rem] font-mono px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                        سعة {storageStats.storageQuotaMb} MB متاحة
+                      </span>
+                    </div>
+
+                    <div className="w-full h-2.5 rounded-full bg-white/10 overflow-hidden relative">
+                      <div
+                        className="h-full transition-all duration-500 rounded-full bg-gradient-to-r from-emerald-400 via-teal-400 to-sky-400"
+                        style={{ width: `${Math.max(1, storageStats.storagePercentUsed)}%` }}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between text-[0.65rem] font-mono text-muted pt-1">
+                      <span>الوسائط والمستندات: {storageStats.mediaCount} عنصر</span>
+                      <span>مستخدم: {storageStats.totalUsedMb.toFixed(2)} MB</span>
+                    </div>
+                  </div>
+
+                  {/* Cloud Control Action Buttons */}
+                  <div className="flex flex-col gap-2.5 pt-2">
                     <button
-                      onClick={handleOptimizeImages}
-                      disabled={isOptimizing}
-                      className="btn btn-ghost text-xs py-2 px-3 gap-2 justify-center font-mono border border-sky-400/30 text-sky-400 hover:bg-sky-500/10"
+                      onClick={handleForceCloudSync}
+                      disabled={isForceSyncing}
+                      className="btn btn-primary justify-center py-3 text-xs gap-2 font-mono uppercase shadow-lg shadow-sky-500/20"
                     >
-                      {isOptimizing ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-                      <span>{isOptimizing ? 'جاري ضغط الصور...' : 'ضغط الصور وتقليل حجم البيانات تلقائياً'}</span>
+                      {isForceSyncing ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CloudUpload className="w-4 h-4" />}
+                      <span>{isForceSyncing ? 'جاري رفع الداتا إلى Supabase...' : 'رفع ومزامنة كامل الداتا إلى Supabase Cloud الآن'}</span>
                     </button>
-                  </div>
-                </div>
-              </div>
 
-              <div className="panel p-6 sm:p-8 flex flex-col gap-5 border border-white/10 rounded-3xl bg-black/40">
-                <div className="flex items-center gap-3 border-b border-white/10 pb-4">
-                  <div className="w-10 h-10 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center justify-center">
-                    <UploadCloud className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-display font-bold text-base text-ink">JSON Backup & Restore</h3>
-                    <p className="text-xs text-muted">Export full dataset or upload a backup file</p>
-                  </div>
-                </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={handleOptimizeImages}
+                        disabled={isOptimizing}
+                        className="btn btn-ghost justify-center py-2.5 text-[0.7rem] gap-1.5 font-mono border border-sky-400/30 text-sky-400 hover:bg-sky-500/10"
+                      >
+                        {isOptimizing ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                        <span>{isOptimizing ? 'جاري الضغط...' : 'ضغط جميع الصور'}</span>
+                      </button>
 
-                <div className="flex flex-col gap-3">
-                  <button onClick={exportJson} className="btn btn-primary justify-center py-3 text-xs font-mono uppercase">
-                    <Download className="w-4 h-4" /> Download .json Backup
-                  </button>
-
-                  <label className="btn btn-ghost justify-center py-3 text-xs cursor-pointer font-mono uppercase border border-white/10">
-                    <UploadCloud className="w-4 h-4 text-rose-400" /> Restore from JSON Backup
-                    <input
-                      type="file"
-                      accept=".json"
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0]
-                        if (file) {
-                          const reader = new FileReader()
-                          reader.onload = async (evt) => {
+                      <button
+                        onClick={async () => {
+                          if (confirm('هل تريد استعادة الداتا الافتراضية الأصلية ورفعها لـ Supabase؟')) {
                             try {
-                              const content = evt.target?.result as string
-                              await importJson(content)
-                              alert('JSON Backup restored successfully!')
+                              await seedDefaultData()
+                              alert('تمت استعادة الداتا الافتراضية المكتملة ورفعها لـ Supabase بنجاح!')
                             } catch (err: any) {
-                              alert(`Failed to restore backup: ${err?.message || 'invalid JSON file or Firestore write failed.'}`)
+                              alert(`فشل استعادة البيانات: ${err?.message}`)
                             }
                           }
-                          reader.readAsText(file)
-                        }
-                      }}
-                    />
-                  </label>
+                        }}
+                        className="btn btn-ghost justify-center py-2.5 text-[0.7rem] gap-1.5 font-mono border border-white/10 text-muted hover:text-ink"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5 text-amber-400" />
+                        <span>استعادة الداتا الافتراضية</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Panel 2: Backup & Restore */}
+                <div className="panel p-6 sm:p-8 flex flex-col gap-5 border border-white/10 rounded-3xl bg-black/40">
+                  <div className="flex items-center gap-3 border-b border-white/10 pb-4">
+                    <div className="w-10 h-10 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 flex items-center justify-center">
+                      <UploadCloud className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-display font-bold text-base text-ink">النسخ الاحتياطي والاستعادة JSON</h3>
+                      <p className="text-xs text-muted">تصدير ملف النسخة الاحتياطية أو استعراضه</p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-3">
+                    <button onClick={exportJson} className="btn btn-primary justify-center py-3 text-xs font-mono uppercase">
+                      <Download className="w-4 h-4" /> تنزيل نسخة احتياطية (.json)
+                    </button>
+
+                    <label className="btn btn-ghost justify-center py-3 text-xs cursor-pointer font-mono uppercase border border-white/10 hover:border-indigo-400/50">
+                      <UploadCloud className="w-4 h-4 text-indigo-400" /> استعادة من ملف JSON
+                      <input
+                        type="file"
+                        accept=".json"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0]
+                          if (file) {
+                            const reader = new FileReader()
+                            reader.onload = async (evt) => {
+                              try {
+                                const content = evt.target?.result as string
+                                await importJson(content)
+                                alert('تمت استعادة النسخة الاحتياطية بنجاح ورفعها على Supabase!')
+                              } catch (err: any) {
+                                alert(`فشل استعادة النسخة: ${err?.message || 'ملف غير صالح.'}`)
+                              }
+                            }
+                            reader.readAsText(file)
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )
+          })()}
         </div>
       </div>
 
@@ -1706,7 +1836,7 @@ export default function AdminDashboard() {
                               const url = await uploadPortfolioImage(file, 'certifications')
                               setDraftCertification((prev) => (prev ? { ...prev, image: url } : prev))
                             } catch (err: any) {
-                              alert(`فشل رفع الصورة إلى Firebase Storage: ${err?.message || 'خطأ غير معروف'}`)
+                              alert(`فشل رفع الصورة إلى Supabase Storage: ${err?.message || 'خطأ غير معروف'}`)
                             } finally {
                               setUploadingImage(false)
                               e.target.value = ''
