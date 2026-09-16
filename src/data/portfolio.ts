@@ -5,6 +5,10 @@
 export interface Stat {
   value: string
   label: string
+  /** When set, the displayed number is computed instead of using `value`. */
+  auto?: 'projects'
+  /** Appended to a computed number, e.g. '+' renders "30+". */
+  suffix?: string
 }
 
 export interface Discipline {
@@ -80,6 +84,7 @@ export interface Profile {
   summary: string
   longBio: string
   cvUrl?: string
+  heroStats?: Stat[]
   socials: {
     portfolio: SocialLink
     linkedin: SocialLink
@@ -87,6 +92,7 @@ export interface Profile {
 }
 
 export interface PortfolioData {
+  socials?: any[]
   profile: Profile
   stats: Stat[]
   disciplines: Discipline[]
@@ -107,10 +113,8 @@ export const initialPortfolio: PortfolioData = {
     email: 'jeshe2013@hotmail.com',
     phone: '+963 9333 543 42',
     whatsapp: '+963 9333 543 42',
-    summary:
-      'Creative professional with 3+ years of experience in UI/UX design, digital product design, branding, and visual communication. Currently working as an Art Director & UI/UX Designer, leading multidisciplinary creative projects across digital products, branding, marketing, and multimedia.',
-    longBio:
-      'Skilled in creative direction, user research, wireframing, prototyping, design systems, visual identity, and cross-functional collaboration. Focused on transforming business objectives into intuitive, engaging, and visually compelling digital experiences.',
+    summary: 'Creative professional with 3+ years of experience in UI/UX design, digital product design, branding, and visual communication. Currently working as an Art Director & UI/UX Designer, leading multidisciplinary creative projects across digital products, branding, marketing, and multimedia.',
+    longBio: 'Skilled in creative direction, user research, wireframing, prototyping, design systems, visual identity, and cross-functional collaboration. Focused on transforming business objectives into intuitive, engaging, and visually compelling digital experiences.',
     cvUrl: '#',
     socials: {
       portfolio: { label: 'Hassan-Aljeshi', url: '#' },
@@ -144,8 +148,7 @@ export const initialPortfolio: PortfolioData = {
         '/hassan-/images/project-1/Thumbnails-3.webp',
         '/hassan-/images/project-1/Thumbnails-4.webp',
       ],
-      description:
-        'Pulsey is a mobile health monitoring app designed to make personal health tracking simple and intuitive. The experience covers heart rate, blood pressure, blood sugar, weight, and BMI monitoring. I designed clear user flows for measurements, health records, statistics, and historical data. Interactive charts and visual indicators help users understand their health data at a glance. The app also includes an AI Doctor experience for accessible health-related consultations. The design focuses on simplicity, consistency, usability, and clear health data visualization.',
+      description: 'Pulsey is a mobile health monitoring app designed to make personal health tracking simple and intuitive. The experience covers heart rate, blood pressure, blood sugar, weight, and BMI monitoring. I designed clear user flows for measurements, health records, statistics, and historical data. Interactive charts and visual indicators help users understand their health data at a glance. The app also includes an AI Doctor experience for accessible health-related consultations. The design focuses on simplicity, consistency, usability, and clear health data visualization.',
       contribution: [
         'User flows',
         'Health records',
@@ -168,8 +171,7 @@ export const initialPortfolio: PortfolioData = {
         '/hassan-/images/marah/Thumbnails-3.webp',
         '/hassan-/images/marah/Thumbnails-4.webp',
       ],
-      description:
-        'Marah is an integrated farm management and multi-vendor marketplace platform designed to connect livestock management, veterinary care, daily farm operations, and agricultural commerce within one unified digital ecosystem. The platform supports multiple user roles, including livestock owners, veterinarians, workers, and vendors, with dedicated experiences and permissions tailored to each role. I designed the experience to simplify complex farm operations, from managing livestock records, medical history, vaccinations, tasks, and daily activities to monitoring reports and important updates. The platform also extends into a multi-vendor marketplace where users can discover agricultural products, browse categories, manage orders, and interact with different sellers. Vendor-focused experiences provide tools for product management, orders, sales insights, and marketplace operations. Throughout the project, I focused on clear information architecture, role-based user flows, intuitive dashboards, and reusable design patterns to maintain consistency across a large and feature-rich ecosystem. The final experience brings farm management and agricultural commerce together in a simple, scalable, and accessible digital product.',
+      description: 'Marah is an integrated farm management and multi-vendor marketplace platform designed to connect livestock management, veterinary care, daily farm operations, and agricultural commerce within one unified digital ecosystem. The platform supports multiple user roles, including livestock owners, veterinarians, workers, and vendors, with dedicated experiences and permissions tailored to each role. I designed the experience to simplify complex farm operations, from managing livestock records, medical history, vaccinations, tasks, and daily activities to monitoring reports and important updates. The platform also extends into a multi-vendor marketplace where users can discover agricultural products, browse categories, manage orders, and interact with different sellers. Vendor-focused experiences provide tools for product management, orders, sales insights, and marketplace operations. Throughout the project, I focused on clear information architecture, role-based user flows, intuitive dashboards, and reusable design patterns to maintain consistency across a large and feature-rich ecosystem. The final experience brings farm management and agricultural commerce together in a simple, scalable, and accessible digital product.',
       contribution: [
         'User flows',
         'Role-based experiences',
@@ -192,8 +194,7 @@ export const initialPortfolio: PortfolioData = {
         '/hassan-/images/signals/Thumbnails-3.webp',
         '/hassan-/images/signals/Thumbnails-4.webp',
       ],
-      description:
-        'Billionaire Signal is a social trading platform designed to create a seamless connection between investors and professional signal providers within one unified ecosystem. The platform supports two distinct user journeys: investors can discover and compare traders, explore their performance and trading history, subscribe to signal providers, and follow trading opportunities, while signal providers can create and publish signals, manage their activity, monitor subscribers, and track their overall performance. I designed the experience around simplifying complex financial information and making key trading data easy to scan, compare, and understand. Performance dashboards combine metrics such as win rate, profit, trading activity, and historical results with clear data visualizations to support faster decision-making. The experience also includes trader discovery, filtering and sorting, subscription management, signal creation, marketplace interactions, notifications, and detailed performance analytics. Throughout the project, I focused on building clear user flows, strong information hierarchy, reusable UI patterns, and a consistent visual system across both investor and signal provider experiences. The final design balances the data-heavy nature of a trading platform with a clean, intuitive interface that keeps important actions and insights accessible throughout the user journey.',
+      description: 'Billionaire Signal is a social trading platform designed to create a seamless connection between investors and professional signal providers within one unified ecosystem. The platform supports two distinct user journeys: investors can discover and compare traders, explore their performance and trading history, subscribe to signal providers, and follow trading opportunities, while signal providers can create and publish signals, manage their activity, monitor subscribers, and track their overall performance. I designed the experience around simplifying complex financial information and making key trading data easy to scan, compare, and understand. Performance dashboards combine metrics such as win rate, profit, trading activity, and historical results with clear data visualizations to support faster decision-making. The experience also includes trader discovery, filtering and sorting, subscription management, signal creation, marketplace interactions, notifications, and detailed performance analytics. Throughout the project, I focused on building clear user flows, strong information hierarchy, reusable UI patterns, and a consistent visual system across both investor and signal provider experiences. The final design balances the data-heavy nature of a trading platform with a clean, intuitive interface that keeps important actions and insights accessible throughout the user journey.',
       contribution: [
         'User flows',
         'Investor & trader experience',
@@ -208,8 +209,7 @@ export const initialPortfolio: PortfolioData = {
       client: 'JoyBox',
       year: '2023',
       discipline: 'Design system',
-      description:
-        'A component library and style guide built to hold visual consistency as the product team and its surface area grew.',
+      description: 'A component library and style guide built to hold visual consistency as the product team and its surface area grew.',
       contribution: ['Component library', 'Style guide', 'Documentation'],
       placeholder: true,
     },
@@ -317,8 +317,7 @@ export const initialPortfolio: PortfolioData = {
       id: 'c1',
       title: 'UI/UX Design Training',
       issuer: 'DTC — UI/UX TRAINING',
-      description:
-        '100 hours of hands-on training focused on designing intuitive user interfaces and delivering high-quality user experiences, applying creativity and innovation to practical design challenges.',
+      description: '100 hours of hands-on training focused on designing intuitive user interfaces and delivering high-quality user experiences, applying creativity and innovation to practical design challenges.',
       date: 'December 2023',
       image: '/hassan-/images/DCT.webp',
       imageAlt: 'UI/UX Design Training certificate from DTC (UNRWA)',
@@ -327,8 +326,7 @@ export const initialPortfolio: PortfolioData = {
       id: 'c2',
       title: 'Google UX Design Professional Certificate',
       issuer: 'GOOGLE — PROFESSIONAL CERTIFICATE',
-      description:
-        'Comprehensive training in user research, wireframing, prototyping, usability testing, interaction design, and high-fidelity interface design in Figma.',
+      description: 'Comprehensive training in user research, wireframing, prototyping, usability testing, interaction design, and high-fidelity interface design in Figma.',
       date: 'February 2024',
       image: '/hassan-/images/Google.webp',
       imageAlt: 'Google UX Design Professional Certificate issued to Mohamad Hassan Aljeshi',
@@ -346,13 +344,29 @@ export const initialPortfolio: PortfolioData = {
       id: 'c3',
       title: 'Certificate of Appreciation',
       issuer: 'LOOTAH TECH — RECOGNITION',
-      description:
-        'Recognized for dedication, valuable contributions, and consistent commitment to the timely and successful completion of assigned tasks.',
+      description: 'Recognized for dedication, valuable contributions, and consistent commitment to the timely and successful completion of assigned tasks.',
       date: 'July 2025',
       image: '/hassan-/images/new.webp',
       imageAlt: 'Certificate of Appreciation from Ys Lootah Tech',
     },
   ],
+  socials: [
+    { platform: 'LinkedIn', url: 'https://linkedin.com' },
+    { platform: 'Portfolio', url: '#' },
+  ]
+}
+
+/** Projects actually shown on the public site — the basis for the auto project count. */
+export function countVisibleProjects(list: Project[] = []): number {
+  return list.filter((p) => !p.hidden).length
+}
+
+/** Resolve what a hero stat box should display, computing auto counts on the fly. */
+export function resolveStatValue(stat: Stat, list: Project[] = []): string {
+  if (stat.auto === 'projects') {
+    return `${countVisibleProjects(list)}${stat.suffix || ''}`
+  }
+  return stat.value
 }
 
 // Legacy named exports for fallback compatibility

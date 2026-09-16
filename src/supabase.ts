@@ -45,7 +45,7 @@ export function sanitizePortfolioData(rawInput: any): any {
 
   // 1. Profile Mapping
   const name = siteConfig.name || raw.profile?.name || initialPortfolio.profile.name || ''
-  const title = siteConfig.role || siteConfig.tagline || raw.profile?.title || raw.profile?.role || initialPortfolio.profile.title || ''
+  const title = siteConfig.role || siteConfig.tagline || raw.profile?.title || raw.profile?.role || initialPortfolio.profile.role || ''
   const summary = siteConfig.summary || raw.summary || raw.profile?.summary || initialPortfolio.profile.summary || ''
   const location = siteConfig.location || raw.profile?.location || initialPortfolio.profile.location || ''
   const email = siteConfig.email || raw.profile?.email || initialPortfolio.profile.email || ''
@@ -53,11 +53,14 @@ export function sanitizePortfolioData(rawInput: any): any {
   const whatsapp = raw.profile?.whatsapp || phone || initialPortfolio.profile.whatsapp || ''
   const available = typeof raw.profile?.available === 'boolean' ? raw.profile.available : true
   const availableText = raw.profile?.availableText || 'Available for freelance & full-time roles'
-  const heroStats = Array.isArray(raw.heroStats)
+
+  const heroStats = Array.isArray(raw.heroStats) && raw.heroStats.length > 0
     ? raw.heroStats
-    : Array.isArray(raw.profile?.heroStats)
-    ? raw.profile.heroStats
-    : initialPortfolio.profile.heroStats
+    : Array.isArray(raw.profile?.heroStats) && raw.profile.heroStats.length > 0
+      ? raw.profile.heroStats
+      : Array.isArray(raw.stats) && raw.stats.length > 0
+        ? raw.stats
+        : initialPortfolio.stats
 
   const socialsObj = {
     linkedin: {
@@ -90,50 +93,63 @@ export function sanitizePortfolioData(rawInput: any): any {
   const rawProjects = Array.isArray(raw.projects) ? raw.projects : []
   const projects = rawProjects.length > 0
     ? rawProjects.map((p: any, idx: number) => {
-        const images = Array.isArray(p.images) && p.images.length > 0
-          ? p.images
-          : p.imageBase64
+      const images = Array.isArray(p.images) && p.images.length > 0
+        ? p.images
+        : p.imageBase64
           ? [p.imageBase64]
           : []
 
-        return {
-          id: p.id || `proj-${idx + 1}`,
-          title: p.name || p.title || `Project ${idx + 1}`,
-          client: p.subtitle || p.client || 'Client / Platform',
-          year: p.period || p.year || '2026',
-          discipline: Array.isArray(p.tags) ? p.tags.join(', ') : (p.discipline || 'Flutter / Mobile'),
-          description: p.description || '',
-          contribution: Array.isArray(p.highlights) ? p.highlights : (Array.isArray(p.contribution) ? p.contribution : []),
-          images: images,
-          url: p.url || '',
-          hidden: Boolean(p.hidden),
-        }
-      })
+      const contribution = Array.isArray(p.highlights) && p.highlights.length > 0
+        ? p.highlights
+        : Array.isArray(p.contribution)
+          ? p.contribution
+          : []
+
+      return {
+        id: p.id || `proj-${idx + 1}`,
+        title: p.name || p.title || `Project ${idx + 1}`,
+        client: p.subtitle || p.client || 'Client / Platform',
+        year: p.period || p.year || '2026',
+        discipline: Array.isArray(p.tags) ? p.tags.join(', ') : (p.discipline || 'UI/UX Design'),
+        description: p.description || '',
+        contribution: contribution,
+        images: images,
+        url: p.url || '',
+        hidden: Boolean(p.hidden),
+      }
+    })
     : initialPortfolio.projects
 
   // 3. Roles / Experience Mapping
-  const rawExperience = Array.isArray(raw.experience)
+  const rawExperience = Array.isArray(raw.experience) && raw.experience.length > 0
     ? raw.experience
-    : Array.isArray(raw.roles)
-    ? raw.roles
-    : []
+    : Array.isArray(raw.roles) && raw.roles.length > 0
+      ? raw.roles
+      : []
 
   const roles = rawExperience.length > 0
     ? rawExperience.map((e: any, idx: number) => ({
-        id: e.id || `exp-${idx + 1}`,
-        title: e.role || e.title || 'Developer',
-        company: e.company || 'Company',
-        location: e.location || '',
-        period: e.period || '',
-        current: e.period?.toLowerCase().includes('present') || Boolean(e.current),
-        points: Array.isArray(e.highlights) ? e.highlights : (Array.isArray(e.points) ? e.points : []),
-      }))
-    : initialPortfolio.roles
+      id: e.id || `exp-${idx + 1}`,
+      title: e.role || e.title || 'Designer',
+      company: e.company || 'Company',
+      location: e.location || '',
+      period: e.period || '',
+      current: e.period?.toLowerCase().includes('present') || Boolean(e.current),
+      points: Array.isArray(e.highlights) && e.highlights.length > 0
+        ? e.highlights
+        : Array.isArray(e.points)
+          ? e.points
+          : [],
+    }))
+    : initialPortfolio.experience
 
   // 4. Skills Mapping
   let skills: any[] = []
-  if (Array.isArray(raw.skills)) {
-    skills = raw.skills
+  if (Array.isArray(raw.skills) && raw.skills.length > 0) {
+    skills = raw.skills.map((s: any) => ({
+      category: s.category || 'Category',
+      items: Array.isArray(s.items) ? s.items : [],
+    }))
   } else if (raw.skills && typeof raw.skills === 'object') {
     const groups: any[] = []
     if (Array.isArray(raw.skills.technical) && raw.skills.technical.length > 0) {
@@ -158,19 +174,44 @@ export function sanitizePortfolioData(rawInput: any): any {
   }
 
   // 6. Languages, Education, Certifications, Disciplines
-  const education = Array.isArray(raw.education)
-    ? raw.education.map((edu: any) => ({
-        degree: edu.degree || '',
-        school: edu.school || '',
-        period: edu.period || '',
-        detail: edu.detail || '',
-      }))
-    : initialPortfolio.education
+  const education = raw.education && typeof raw.education === 'object' && !Array.isArray(raw.education)
+    ? {
+      degree: raw.education.degree || initialPortfolio.education.degree,
+      school: raw.education.school || initialPortfolio.education.school,
+      period: raw.education.period || initialPortfolio.education.period,
+      detail: raw.education.detail || initialPortfolio.education.detail,
+    }
+    : Array.isArray(raw.education) && raw.education.length > 0
+      ? {
+        degree: raw.education[0].degree || '',
+        school: raw.education[0].school || '',
+        period: raw.education[0].period || '',
+        detail: raw.education[0].detail || '',
+      }
+      : initialPortfolio.education
 
-  const languages = Array.isArray(raw.languages) ? raw.languages : initialPortfolio.languages
-  const certifications = Array.isArray(raw.certifications) ? raw.certifications : initialPortfolio.certifications
+  const languages = Array.isArray(raw.languages) && raw.languages.length > 0
+    ? raw.languages
+    : initialPortfolio.languages
+
+  const certifications = Array.isArray(raw.certifications) && raw.certifications.length > 0
+    ? raw.certifications.map((c: any, idx: number) => ({
+      id: c.id || `cert-${idx + 1}`,
+      title: c.title || '',
+      issuer: c.issuer || '',
+      description: c.description || '',
+      date: c.date || '',
+      image: c.image || '',
+      imageAlt: c.imageAlt || '',
+      modules: Array.isArray(c.modules) ? c.modules : [],
+    }))
+    : initialPortfolio.certifications
+
   const disciplines = Array.isArray(raw.disciplines) && raw.disciplines.length > 0
-    ? raw.disciplines
+    ? raw.disciplines.map((d: any) => ({
+      name: d.name || 'Practice',
+      note: d.note || '',
+    }))
     : initialPortfolio.disciplines
 
   return {

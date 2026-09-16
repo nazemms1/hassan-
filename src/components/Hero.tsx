@@ -1,8 +1,19 @@
 import { usePortfolio } from '../context/PortfolioContext'
+import { resolveStatValue } from '../data/portfolio'
 
 export default function Hero() {
   const { data } = usePortfolio()
-  const { profile, disciplines, stats } = data
+  const profile = data?.profile || {
+    name: 'Mohamad Hassan Aljeshi',
+    role: 'Art Director & UI/UX Designer',
+    tagline: 'Creative direction for digital products, brands, and the work around them',
+    location: 'Damascus, Syria',
+    email: 'jeshe2013@hotmail.com',
+    longBio: '',
+  }
+  const disciplines = data?.disciplines || []
+  const stats = data?.profile?.heroStats || data?.stats || []
+  const projects = data?.projects || []
 
   return (
     <section
@@ -58,11 +69,11 @@ export default function Hero() {
               <img src="/hassan-/Photo.png" alt={`Portrait of ${profile.name}`} />
             </div>
           </div>
-          <div className="hero-signature label">{profile.name.split(' ')[0]} — UI/UX &amp; art direction</div>
+          <div className="hero-signature label">{(profile.name || 'Hassan').split(' ')[0]} — UI/UX &amp; art direction</div>
           <div className="hero-stats panel">
-            {stats.map((stat) => (
-              <div key={stat.label} className="hero-stat">
-                <strong>{stat.value}</strong>
+            {stats.map((stat, index) => (
+              <div key={`${stat.label}-${index}`} className="hero-stat">
+                <strong>{resolveStatValue(stat, projects)}</strong>
                 <span>{stat.label}</span>
               </div>
             ))}

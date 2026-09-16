@@ -8,8 +8,9 @@ const VISIBLE_POINTS = 3
 
 function RoleCard({ role }: { role: Role }) {
   const [expanded, setExpanded] = useState(false)
-  const hidden = role.points.length - VISIBLE_POINTS
-  const points = expanded ? role.points : role.points.slice(0, VISIBLE_POINTS)
+  const rolePoints = role.points || []
+  const hidden = rolePoints.length - VISIBLE_POINTS
+  const points = expanded ? rolePoints : rolePoints.slice(0, VISIBLE_POINTS)
 
   return (
     <article className="panel flex flex-col gap-7 p-7 sm:p-9">
@@ -79,6 +80,7 @@ function RoleCard({ role }: { role: Role }) {
 
 export default function Experience() {
   const { data } = usePortfolio()
+  const experienceList = data?.experience || []
 
   return (
     <Band
@@ -88,7 +90,7 @@ export default function Experience() {
       intro="Product design, design systems, and creative direction across multidisciplinary product teams."
     >
       <div className="flex flex-col gap-5">
-        {data.experience.map((role, i) => (
+        {experienceList.map((role, i) => (
           <Reveal key={`${role.company}-${role.period}`} delay={i * 90}>
             <RoleCard role={role} />
           </Reveal>

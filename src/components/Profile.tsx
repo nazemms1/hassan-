@@ -4,9 +4,12 @@ import Reveal from './Reveal'
 
 export default function Profile() {
   const { data } = usePortfolio()
-  const { profile, disciplines, languages } = data
+  const profile = data?.profile || { summary: '', longBio: '' }
+  const disciplines = data?.disciplines || []
+  const languages = data?.languages || []
+  const experienceList = data?.experience || []
 
-  const currentRole = data.experience.find((r) => r.current) || data.experience[0]
+  const currentRole = experienceList.find((r) => r.current) || experienceList[0]
 
   return (
     <Band

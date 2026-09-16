@@ -183,7 +183,7 @@ function ProjectModal({
             <div className="border-t border-rule pt-6">
               <p className="label mb-3">My contribution</p>
               <ul className="flex flex-wrap gap-2">
-                {project.contribution.map((item) => (
+                {(project.contribution || []).map((item) => (
                   <li key={item} className="label rounded-full border border-rule px-2.5 py-1.5 text-muted">
                     {item}
                   </li>
@@ -332,7 +332,7 @@ export default function Work() {
                   </p>
 
                   <ul className="mt-auto flex flex-wrap gap-2 pt-2">
-                    {project.contribution.map((item) => (
+                    {(project.contribution || []).map((item) => (
                       <li
                         key={item}
                         className="label rounded-full border border-rule px-2.5 py-1.5 text-muted"

@@ -5,7 +5,7 @@ import Reveal from './Reveal'
 
 export default function Capabilities() {
   const { data } = usePortfolio()
-  const skills = data.skills
+  const skills = data?.skills || []
 
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const currentCategory = activeCategory || skills[0]?.category || 'Design'
@@ -30,6 +30,7 @@ export default function Capabilities() {
           >
             {skills.map((entry) => {
               const isActive = entry.category === currentCategory
+              const itemsList = entry.items || []
               return (
                 <button
                   key={entry.category}
@@ -50,7 +51,7 @@ export default function Capabilities() {
                   }
                 >
                   {entry.category}
-                  <span className="ml-2 text-faint">{entry.items.length}</span>
+                  <span className="ml-2 text-faint">{itemsList.length}</span>
                 </button>
               )
             })}
@@ -63,7 +64,7 @@ export default function Capabilities() {
               key={group.category}
               className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
             >
-              {group.items.map((item, i) => (
+              {(group.items || []).map((item, i) => (
                 <li
                   key={item}
                   className="panel panel-hover flex items-center gap-4 px-5 py-4"

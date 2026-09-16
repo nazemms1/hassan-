@@ -57,7 +57,7 @@ function useScrollProgress() {
 
 export default function TopBar() {
   const { data } = usePortfolio()
-  const { profile } = data
+  const profile = data?.profile
   const active = useActiveSection()
   const progress = useScrollProgress()
   const [open, setOpen] = useState(false)
@@ -81,7 +81,7 @@ export default function TopBar() {
     }
   }, [open])
 
-  const nameInitials = profile.name
+  const nameInitials = (profile?.name || '')
     .split(' ')
     .map((n) => n[0])
     .filter(Boolean)
@@ -107,7 +107,7 @@ export default function TopBar() {
               {nameInitials || 'HA'}
             </span>
             <span className="font-display text-[0.9375rem] font-semibold leading-none text-ink">
-              {profile.name}
+              {profile?.name}
             </span>
           </a>
 

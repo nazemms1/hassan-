@@ -5,7 +5,8 @@ import Reveal from './Reveal'
 
 export default function Credentials() {
   const { data } = usePortfolio()
-  const { education, certifications } = data
+  const education = data?.education || { degree: '', school: '', period: '', detail: '' }
+  const certifications = data?.certifications || []
   const [selectedImage, setSelectedImage] = useState<{ src: string; title: string; alt?: string } | null>(null)
 
   return (

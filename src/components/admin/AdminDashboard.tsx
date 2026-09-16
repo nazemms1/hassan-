@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react'
 import { usePortfolio } from '../../context/PortfolioContext'
 import {
   uploadPortfolioImage,
-  getPortfolioByteSize,
   optimizePortfolioDataImages,
   getStorageCapacityStats,
 } from '../../supabase'
-import type { Certification, Discipline, Project, Role } from '../../data/portfolio'
+import type { Certification, Discipline, Project, Role, Stat } from '../../data/portfolio'
+import { countVisibleProjects, resolveStatValue } from '../../data/portfolio'
 import {
   User,
   FolderKanban,
@@ -116,7 +116,7 @@ export default function AdminDashboard() {
       console.error('Save error:', err)
       alert(
         `فشل حفظ التعديلات على Supabase: ${err?.message || 'خطأ غير معروف'}\n\n` +
-          `التعديلات محفوظة مؤقتاً بمتصفحك فقط ولن تظهر لباقي الزوار أو على باقي الأجهزة حتى تتم مزامنتها بنجاح. حاول الحفظ مرة أخرى.`
+        `التعديلات محفوظة مؤقتاً بمتصفحك فقط ولن تظهر لباقي الزوار أو على باقي الأجهزة حتى تتم مزامنتها بنجاح. حاول الحفظ مرة أخرى.`
       )
     } finally {
       setIsSaving(false)
@@ -261,6 +261,55 @@ export default function AdminDashboard() {
     setDrawerOpen(false)
   }
 
+  /* ── Hero Stat Boxes ─────────────────────────────────────────────────────── */
+  // `profile.heroStats` is the source of truth the sanitizer reads first, so every
+  // edit has to land there as well as on the top level `stats` alias.
+  const heroStats: Stat[] = formData.profile?.heroStats || formData.stats || []
+  const liveProjectCount = countVisibleProjects(formData.projects)
+
+  const applyHeroStats = (nextStats: Stat[]) => {
+    setFormData({
+      ...formData,
+      stats: nextStats,
+      profile: { ...formData.profile, heroStats: nextStats },
+    })
+  }
+
+  const updateHeroStat = (idx: number, patch: Partial<Stat>) => {
+    applyHeroStats(heroStats.map((s, i) => (i === idx ? { ...s, ...patch } : s)))
+  }
+
+  const addHeroStat = () => {
+    applyHeroStats([...heroStats, { value: '0', label: 'New metric' }])
+  }
+
+  const removeHeroStat = (idx: number) => {
+    applyHeroStats(heroStats.filter((_, i) => i !== idx))
+  }
+
+  const moveHeroStat = (idx: number, dir: -1 | 1) => {
+    const target = idx + dir
+    if (target < 0 || target >= heroStats.length) return
+    const next = [...heroStats]
+    const temp = next[target]
+    next[target] = next[idx]
+    next[idx] = temp
+    applyHeroStats(next)
+  }
+
+  const toggleHeroStatAuto = (idx: number, auto: boolean) => {
+    const stat = heroStats[idx]
+    if (auto) {
+      updateHeroStat(idx, { auto: 'projects', suffix: stat.suffix ?? '+' })
+      return
+    }
+    // Freeze the last computed number so the box keeps showing the same thing.
+    const frozen = resolveStatValue(stat, formData.projects)
+    applyHeroStats(
+      heroStats.map((s, i) => (i === idx ? { value: frozen, label: s.label } : s))
+    )
+  }
+
   // Filtered projects
   const filteredProjects = formData.projects.filter(
     (p) =>
@@ -284,9 +333,8 @@ export default function AdminDashboard() {
           LEFT FIXED VERTICAL SIDEBAR
          ───────────────────────────────────────────────────────────────── */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 w-72 bg-[#090d1a] border-r border-white/10 flex flex-col justify-between transition-transform duration-300 ease-in-out md:translate-x-0 ${
-          mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        className={`fixed inset-y-0 left-0 z-40 w-72 bg-[#090d1a] border-r border-white/10 flex flex-col justify-between transition-transform duration-300 ease-in-out md:translate-x-0 ${mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
       >
         {/* Studio Branding */}
         <div className="p-6 border-b border-white/10 flex items-center justify-between">
@@ -323,17 +371,15 @@ export default function AdminDashboard() {
                   setActiveTab(tab.id as MainTab)
                   setMobileSidebarOpen(false)
                 }}
-                className={`group flex items-center justify-between gap-3 px-4 py-3.5 rounded-2xl text-xs font-medium transition-all ${
-                  isActive
+                className={`group flex items-center justify-between gap-3 px-4 py-3.5 rounded-2xl text-xs font-medium transition-all ${isActive
                     ? 'bg-white/10 text-ink border border-white/20 shadow-xl shadow-black/50 ring-1 ring-sky-400/40'
                     : 'text-muted hover:text-ink hover:bg-white/5 border border-transparent'
-                }`}
+                  }`}
               >
                 <div className="flex items-center gap-3">
                   <div
-                    className={`w-8 h-8 rounded-xl flex items-center justify-center border ${
-                      isActive ? 'bg-white/10 border-white/20' : 'bg-black/30 border-white/5'
-                    }`}
+                    className={`w-8 h-8 rounded-xl flex items-center justify-center border ${isActive ? 'bg-white/10 border-white/20' : 'bg-black/30 border-white/5'
+                      }`}
                   >
                     <Icon className={`w-4 h-4 ${tab.color}`} />
                   </div>
@@ -341,9 +387,8 @@ export default function AdminDashboard() {
                 </div>
                 {tab.count !== null && (
                   <span
-                    className={`text-[0.65rem] font-mono px-2 py-0.5 rounded-full ${
-                      isActive ? 'bg-sky-400/20 text-sky-300 font-bold' : 'bg-white/10 text-muted'
-                    }`}
+                    className={`text-[0.65rem] font-mono px-2 py-0.5 rounded-full ${isActive ? 'bg-sky-400/20 text-sky-300 font-bold' : 'bg-white/10 text-muted'
+                      }`}
                   >
                     {tab.count}
                   </span>
@@ -362,20 +407,18 @@ export default function AdminDashboard() {
             <div className="flex flex-col min-w-0 flex-1">
               <span className="text-xs font-semibold text-ink truncate">{user?.email || 'Administrator'}</span>
               <span
-                className={`text-[0.625rem] font-mono flex items-center gap-1 ${
-                  syncStatus === 'error' ? 'text-red-400' : 'text-emerald-400'
-                }`}
+                className={`text-[0.625rem] font-mono flex items-center gap-1 ${syncStatus === 'error' ? 'text-red-400' : 'text-emerald-400'
+                  }`}
               >
                 <span
-                  className={`w-1.5 h-1.5 rounded-full animate-pulse ${
-                    syncStatus === 'error' ? 'bg-red-400' : 'bg-emerald-400'
-                  }`}
+                  className={`w-1.5 h-1.5 rounded-full animate-pulse ${syncStatus === 'error' ? 'bg-red-400' : 'bg-emerald-400'
+                    }`}
                 />
                 {syncStatus === 'live'
                   ? 'Live Supabase'
                   : syncStatus === 'error'
-                  ? 'Sync Failed — Not Saved'
-                  : 'Local Storage Mode'}
+                    ? 'Sync Failed — Not Saved'
+                    : 'Local Storage Mode'}
               </span>
             </div>
           </div>
@@ -423,14 +466,14 @@ export default function AdminDashboard() {
                   {activeTab === 'projects'
                     ? 'Projects Showcase'
                     : activeTab === 'disciplines'
-                    ? 'Services & Practices'
-                    : activeTab === 'profile'
-                    ? 'Profile & Hero Details'
-                    : activeTab === 'experience'
-                    ? 'Work Experience Timeline'
-                    : activeTab === 'skills'
-                    ? 'Skills & Credentials'
-                    : 'System Status & Data Backup'}
+                      ? 'Services & Practices'
+                      : activeTab === 'profile'
+                        ? 'Profile & Hero Details'
+                        : activeTab === 'experience'
+                          ? 'Work Experience Timeline'
+                          : activeTab === 'skills'
+                            ? 'Skills & Credentials'
+                            : 'System Status & Data Backup'}
                 </span>
               </h1>
               <span className="text-xs text-muted">
@@ -771,6 +814,7 @@ export default function AdminDashboard() {
               TAB 3: PROFILE & HERO
            ================================================================= */}
           {activeTab === 'profile' && (
+            <div className="flex flex-col gap-6">
             <div className="grid gap-6 lg:grid-cols-2">
               <div className="panel p-6 sm:p-8 flex flex-col gap-5 border border-white/10 rounded-3xl bg-black/40">
                 <div className="flex items-center gap-3 border-b border-white/10 pb-4">
@@ -896,6 +940,140 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* ── Hero Stat Boxes ───────────────────────────────────────── */}
+            <div className="panel p-6 sm:p-8 flex flex-col gap-5 border border-white/10 rounded-3xl bg-black/40">
+              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center">
+                    <Activity className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-display font-bold text-base text-ink">
+                      Hero Stat Boxes ({heroStats.length})
+                    </h3>
+                    <p className="text-xs text-muted">
+                      The numbered boxes under the hero portrait. Press Save to publish changes.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={addHeroStat}
+                  className="btn btn-primary text-xs py-2.5 px-4 gap-2 font-mono uppercase shadow-lg shadow-emerald-500/20"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Stat
+                </button>
+              </div>
+
+              {heroStats.length === 0 && (
+                <p className="text-xs text-faint py-6 text-center">
+                  No stat boxes yet — add one to show numbers in the hero section.
+                </p>
+              )}
+
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {heroStats.map((stat, idx) => {
+                  const isAuto = stat.auto === 'projects'
+                  return (
+                    <div
+                      key={idx}
+                      className="panel p-5 border border-white/10 rounded-3xl bg-black/40 flex flex-col gap-4"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center font-mono text-xs font-bold">
+                          #{idx + 1}
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <button
+                            disabled={idx === 0}
+                            onClick={() => moveHeroStat(idx, -1)}
+                            className="p-1.5 rounded-lg border border-white/10 hover:bg-white/10 text-muted disabled:opacity-20"
+                          >
+                            <MoveUp className="w-3.5 h-3.5 text-emerald-400" />
+                          </button>
+                          <button
+                            disabled={idx === heroStats.length - 1}
+                            onClick={() => moveHeroStat(idx, 1)}
+                            className="p-1.5 rounded-lg border border-white/10 hover:bg-white/10 text-muted disabled:opacity-20"
+                          >
+                            <MoveDown className="w-3.5 h-3.5 text-emerald-400" />
+                          </button>
+                          <button
+                            onClick={() => removeHeroStat(idx)}
+                            className="p-1.5 rounded-lg border border-white/10 text-faint hover:text-red-400 transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-1.5">
+                        <label className="label text-[0.65rem] text-muted">Value</label>
+                        <input
+                          type="text"
+                          value={isAuto ? resolveStatValue(stat, formData.projects) : stat.value}
+                          disabled={isAuto}
+                          onChange={(e) => updateHeroStat(idx, { value: e.target.value })}
+                          placeholder="30+"
+                          className="w-full px-4 py-2.5 rounded-xl bg-black/50 border border-white/10 text-sm text-ink disabled:opacity-50 disabled:cursor-not-allowed"
+                        />
+                      </div>
+
+                      <div className="flex flex-col gap-1.5">
+                        <label className="label text-[0.65rem] text-muted">Label</label>
+                        <input
+                          type="text"
+                          value={stat.label}
+                          onChange={(e) => updateHeroStat(idx, { label: e.target.value })}
+                          placeholder="Digital products"
+                          className="w-full px-4 py-2.5 rounded-xl bg-black/50 border border-white/10 text-sm text-ink"
+                        />
+                      </div>
+
+                      <label className="flex items-start gap-2.5 text-xs text-muted cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={isAuto}
+                          onChange={(e) => toggleHeroStatAuto(idx, e.target.checked)}
+                          className="mt-0.5 w-4 h-4 accent-emerald-400"
+                        />
+                        <span>
+                          Count projects automatically
+                          <span className="block text-[0.65rem] text-faint">
+                            Currently {liveProjectCount} visible project{liveProjectCount === 1 ? '' : 's'}
+                          </span>
+                        </span>
+                      </label>
+
+                      {isAuto && (
+                        <div className="flex flex-col gap-1.5">
+                          <label className="label text-[0.65rem] text-muted">Suffix</label>
+                          <input
+                            type="text"
+                            value={stat.suffix || ''}
+                            onChange={(e) => updateHeroStat(idx, { suffix: e.target.value })}
+                            placeholder="+"
+                            className="w-full px-4 py-2.5 rounded-xl bg-black/50 border border-white/10 text-sm text-ink"
+                          />
+                        </div>
+                      )}
+
+                      <div className="border-t border-white/10 pt-3 mt-auto text-center">
+                        <div className="font-display font-bold text-2xl text-ink">
+                          {resolveStatValue(stat, formData.projects) || '—'}
+                        </div>
+                        <div className="label text-[0.6rem] text-faint uppercase mt-0.5">
+                          {stat.label || 'No label'}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
             </div>
           )}
 
@@ -1182,13 +1360,12 @@ export default function AdminDashboard() {
                     </div>
 
                     <span
-                      className={`text-[0.65rem] font-mono px-3 py-1 rounded-full border ${
-                        syncStatus === 'live'
+                      className={`text-[0.65rem] font-mono px-3 py-1 rounded-full border ${syncStatus === 'live'
                           ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
                           : syncStatus === 'error'
-                          ? 'bg-red-500/20 text-red-400 border-red-500/30'
-                          : 'bg-amber-500/20 text-amber-400 border-amber-500/30'
-                      }`}
+                            ? 'bg-red-500/20 text-red-400 border-red-500/30'
+                            : 'bg-amber-500/20 text-amber-400 border-amber-500/30'
+                        }`}
                     >
                       {syncStatus === 'live' ? 'Live Connected' : syncStatus === 'error' ? 'Connection Error' : 'Local Cache'}
                     </span>
@@ -1227,13 +1404,12 @@ export default function AdminDashboard() {
                         </span>
                       </div>
                       <span
-                        className={`text-[0.65rem] font-mono px-2.5 py-1 rounded-full border ${
-                          storageStats.payloadPercentUsed > 80
+                        className={`text-[0.65rem] font-mono px-2.5 py-1 rounded-full border ${storageStats.payloadPercentUsed > 80
                             ? 'bg-red-500/20 text-red-400 border-red-500/30'
                             : storageStats.payloadPercentUsed > 50
-                            ? 'bg-amber-500/20 text-amber-400 border-amber-500/30'
-                            : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
-                        }`}
+                              ? 'bg-amber-500/20 text-amber-400 border-amber-500/30'
+                              : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                          }`}
                       >
                         {(100 - storageStats.payloadPercentUsed).toFixed(1)}% متبقي
                       </span>
@@ -1242,13 +1418,12 @@ export default function AdminDashboard() {
                     {/* Progress Bar */}
                     <div className="w-full h-2.5 rounded-full bg-white/10 overflow-hidden relative">
                       <div
-                        className={`h-full transition-all duration-500 rounded-full ${
-                          storageStats.payloadPercentUsed > 80
+                        className={`h-full transition-all duration-500 rounded-full ${storageStats.payloadPercentUsed > 80
                             ? 'bg-gradient-to-r from-red-500 to-rose-600'
                             : storageStats.payloadPercentUsed > 50
-                            ? 'bg-gradient-to-r from-amber-400 to-orange-500'
-                            : 'bg-gradient-to-r from-sky-400 via-blue-500 to-emerald-400'
-                        }`}
+                              ? 'bg-gradient-to-r from-amber-400 to-orange-500'
+                              : 'bg-gradient-to-r from-sky-400 via-blue-500 to-emerald-400'
+                          }`}
                         style={{ width: `${Math.max(3, storageStats.payloadPercentUsed)}%` }}
                       />
                     </div>
